@@ -56,10 +56,12 @@ function includeShape(b: Bounds, shape: Shape): void {
 }
 
 /** Minimum padding in plane units — sized to fit a label (font 0.16 +
- * offset 0.13) drawn just outside the outermost geometry. */
-const MIN_PADDING = 0.35;
+ * offset 0.13 = 0.29) drawn just outside the outermost geometry, trimmed as
+ * tight as that still allows while keeping the drawing as large as
+ * possible. */
+const MIN_PADDING = 0.28;
 /** Padding as a fraction of the scene's larger dimension. */
-const PADDING_RATIO = 0.08;
+const PADDING_RATIO = 0.04;
 
 /**
  * Compute a view box that frames every shape in `scene` with comfortable

@@ -75,6 +75,29 @@ To follow **Obsidian's own light/dark toggle live** (which is independent of the
 
 The message format is `{ type: 'euclid-theme', theme: 'dark' | 'light', bg?: '#hex' }` — `bg` optionally overrides the background color to match a custom theme exactly.
 
+### Full-bleed embeds
+
+To let an embed break out of the note's text column and use the full page width (the same pattern used for other full-bleed widgets), add this to your Obsidian Publish `publish.css`:
+
+```css
+iframe[src*="euclidean-animations"] {
+  width: calc(100% + 96px) !important;
+  margin-left: -48px;
+  display: block;
+  border: none;
+}
+
+@media (max-width: 750px) {
+  iframe[src*="euclidean-animations"] {
+    width: 100vw !important;
+    margin-left: calc(50% - 50vw);
+    border-radius: 0;
+  }
+}
+```
+
+Note: the wider the iframe gets relative to its `height`, the more the fixed-height `fill` player letterboxes horizontally (the drawing centers with empty margin left and right, since it won't exceed the proposition's aspect ratio). Pair full-bleed width with a proportionally generous `height` attribute on the `<iframe>` to keep the drawn geometry large — e.g. a `width: calc(100% + 96px)` embed wants a taller `height` than a narrow inline one.
+
 ## Authoring a proposition
 
 Add a file under `public/propositions/` (e.g. `I.5.json`). No rebuild of the JavaScript is needed — proposition JSON is fetched at runtime.

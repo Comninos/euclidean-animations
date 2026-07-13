@@ -18,10 +18,9 @@ const TEMPLATE = `
 <style>
   :host {
     ${paletteCssDeclarations(LIGHT_PALETTE)}
-    /* alpha tones derived from the ink color, for chrome (borders etc.) */
+    /* alpha tone derived from the ink color, for the host's hairline border
+       (gallery mode only — fill mode drops it, see :host([fill])). */
     --euclid-line: color-mix(in srgb, var(--euclid-black) 14%, transparent);
-    --euclid-line-strong: color-mix(in srgb, var(--euclid-black) 38%, transparent);
-    --euclid-hover: color-mix(in srgb, var(--euclid-black) 8%, transparent);
     display: block;
     box-sizing: border-box;
     font-family: ${LABEL_FONT_FAMILY};
@@ -55,6 +54,9 @@ const TEMPLATE = `
     display: flex;
     flex-direction: column;
     height: 100%;
+    /* Full-bleed iframe embeds: no border chrome eating into the width. */
+    border: none;
+    border-radius: 0;
   }
   :host([fill]) .stage-wrap {
     flex: 1;
@@ -74,31 +76,33 @@ const TEMPLATE = `
     pointer-events: none;
   }
   .caption {
-    min-height: 2.4em;
+    /* Height is set inline (in JS) to the tallest caption/title across the
+       whole proposition, measured at the current width, so the stage above
+       never jumps when a step's text wraps to a different line count. See
+       measureCaptionHeight()/syncCaptionHeight() in EuclidPlayerElement. */
     padding: 0.6em 1em;
     font-style: italic;
     font-size: 0.95rem;
     line-height: 1.35;
-    border-top: 1px solid var(--euclid-line);
     color: var(--euclid-black);
+    box-sizing: border-box;
   }
   .controls {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5em;
-    padding: 0.5em 0.8em;
-    border-top: 1px solid var(--euclid-line);
+    padding: 0.4em 0.8em 0.6em;
     font-family: system-ui, sans-serif;
   }
   button.ctrl {
     appearance: none;
-    border: 1px solid var(--euclid-line-strong);
-    background: var(--euclid-background);
-    color: var(--euclid-black);
-    border-radius: 4px;
-    width: 2.1em;
-    height: 2.1em;
-    font-size: 1rem;
+    border: none;
+    background: transparent;
+    color: var(--euclid-control);
+    width: 1.9em;
+    height: 1.9em;
+    font-size: 0.95rem;
     line-height: 1;
     cursor: pointer;
     display: inline-flex;
@@ -106,15 +110,21 @@ const TEMPLATE = `
     justify-content: center;
   }
   button.ctrl:hover:not(:disabled) {
-    background: var(--euclid-hover);
+    color: var(--euclid-accent);
   }
   button.ctrl:disabled {
     opacity: 0.35;
     cursor: default;
   }
+  button.ctrl:disabled:hover {
+    color: var(--euclid-control);
+  }
   button.ctrl:focus-visible {
-    outline: 2px solid var(--euclid-blue);
-    outline-offset: 1px;
+    outline: none;
+    color: var(--euclid-accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.3em;
   }
   .dots {
     display: flex;
@@ -124,16 +134,20 @@ const TEMPLATE = `
     flex-wrap: wrap;
   }
   .dot {
-    width: 0.6em;
-    height: 0.6em;
+    width: 0.55em;
+    height: 0.55em;
     border-radius: 50%;
-    border: 1px solid var(--euclid-line-strong);
+    border: 1px solid var(--euclid-control);
     background: transparent;
     padding: 0;
     cursor: pointer;
   }
   .dot[aria-current="true"] {
     background: var(--euclid-accent);
+    border-color: var(--euclid-accent);
+  }
+  .dot:focus-visible {
+    outline: none;
     border-color: var(--euclid-accent);
   }
   .error {
@@ -148,6 +162,7 @@ const TEMPLATE = `
     font-weight: bold;
     font-style: normal;
     font-size: 1rem;
+    text-align: center;
   }
 </style>
 <div class="title" part="title" hidden></div>
@@ -181,6 +196,10 @@ export class EuclidPlayerElement extends HTMLElement {
   private prop: Proposition | null = null;
   private loadToken = 0;
   private reducedMotionQuery: MediaQueryList | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  /** Offscreen clone of .caption used only to measure text height at the
+   * current width; see measureMaxCaptionHeight()/syncCaptionHeight(). */
+  private captionMeasurer: HTMLDivElement | null = null;
 
   constructor() {
     super();
@@ -224,10 +243,19 @@ export class EuclidPlayerElement extends HTMLElement {
     if (typeof window.matchMedia === 'function') {
       this.reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     }
+    if (typeof ResizeObserver !== 'undefined' && !this.resizeObserver) {
+      // The caption's reserved height depends on its rendered width (how
+      // many lines each step's text wraps to), so any host resize can
+      // invalidate the previously measured max and must re-measure.
+      this.resizeObserver = new ResizeObserver(() => this.syncCaptionHeight());
+      this.resizeObserver.observe(this);
+    }
   }
 
   disconnectedCallback(): void {
     this.reducedMotionQuery = null;
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
   }
 
   attributeChangedCallback(name: string): void {
@@ -345,10 +373,66 @@ export class EuclidPlayerElement extends HTMLElement {
 
     this.onStepChange(0, prop.steps.length);
     this.onPlayStateChange('paused');
+    this.syncCaptionHeight();
 
     if (this.hasAttribute('autoplay')) {
       void this.timeline.play();
     }
+  }
+
+  /** Reserve stable space in .caption for the tallest caption text across
+   * every step of the current proposition (including the title, which
+   * displays as the caption at step 0), measured at the caption's *current*
+   * rendered width. This prevents the stage above from jumping when
+   * stepping between captions that wrap to different numbers of lines —
+   * the caption block is sized once up front instead of growing/shrinking
+   * per step. Called after mount() and on every host resize (the wrap
+   * point depends on width). */
+  private syncCaptionHeight(): void {
+    if (!this.prop) return;
+    const texts: string[] = [this.prop.title ?? ''];
+    for (const step of this.prop.steps) texts.push(step.text ?? '');
+    const max = this.measureMaxCaptionHeight(texts);
+    this.captionEl.style.height = max > 0 ? `${max}px` : '';
+  }
+
+  /** Render each candidate string into an offscreen clone of .caption
+   * (same computed styles/width, absolutely positioned out of flow so it
+   * never affects layout or paints), and return the tallest resulting
+   * scrollHeight in px. Using a real clone of the element — rather than
+   * guessing from font metrics — keeps this correct under font
+   * loading/zoom/user font-size overrides without duplicating the
+   * caption's CSS. */
+  private measureMaxCaptionHeight(texts: readonly string[]): number {
+    const measurer = this.getCaptionMeasurer();
+    // Match the live caption's content-box width so text wraps identically.
+    const liveWidth = this.captionEl.getBoundingClientRect().width;
+    if (liveWidth > 0) measurer.style.width = `${liveWidth}px`;
+    let max = 0;
+    for (const text of texts) {
+      measurer.textContent = text;
+      max = Math.max(max, measurer.scrollHeight);
+    }
+    return max;
+  }
+
+  /** Lazily create the hidden .caption clone used for measurement, inside
+   * the shadow root so it inherits identical styles (font, padding,
+   * line-height) via the same <style> block. */
+  private getCaptionMeasurer(): HTMLDivElement {
+    if (this.captionMeasurer) return this.captionMeasurer;
+    const measurer = document.createElement('div');
+    measurer.className = 'caption';
+    measurer.setAttribute('aria-hidden', 'true');
+    measurer.style.position = 'absolute';
+    measurer.style.visibility = 'hidden';
+    measurer.style.height = 'auto';
+    measurer.style.pointerEvents = 'none';
+    measurer.style.top = '0';
+    measurer.style.left = '-9999px';
+    this.shadow.appendChild(measurer);
+    this.captionMeasurer = measurer;
+    return measurer;
   }
 
   private buildDots(totalSteps: number): void {

@@ -18,6 +18,10 @@ export interface Palette {
   readonly blue: string;
   readonly yellow: string;
   readonly accent: string;
+  /** Middle grey for quiet chrome (control glyphs, inactive step dots) —
+   * legible on both the light-paper and near-black grounds without reading
+   * as UI "furniture". */
+  readonly control: string;
 }
 
 export const LIGHT_PALETTE: Palette = {
@@ -28,6 +32,7 @@ export const LIGHT_PALETTE: Palette = {
   blue: '#205EA6',
   yellow: '#AD8301',
   accent: '#C03E35',
+  control: '#878580',
 };
 
 export const DARK_PALETTE: Palette = {
@@ -38,6 +43,7 @@ export const DARK_PALETTE: Palette = {
   blue: '#4385BE',
   yellow: '#D0A215',
   accent: '#C03E35',
+  control: '#878580',
 };
 
 /** CSS custom-property declarations for a palette, applied to :host. */
