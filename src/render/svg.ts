@@ -9,7 +9,7 @@
 // natural math coordinates in proposition JSON.
 
 import type { AngleMarkShape, Point, Scene, Shape } from '../kernel/types';
-import { styleForShape, LABEL_FONT_FAMILY, LABEL_FONT_STYLE, LABEL_FONT_SIZE, LABEL_OFFSET, POINT_RADIUS, resolveFillOrStroke } from './style';
+import { styleForShape, LABEL_FONT_FAMILY, LABEL_FONT_STYLE, LABEL_FONT_SIZE, LABEL_OFFSET, POINT_RADIUS, resolveFillOrStroke, roleFillOpacity } from './style';
 import type { ViewBox } from '../format/schema';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -123,7 +123,7 @@ export function renderShape(shape: Shape): RenderedShape {
       const circle = el('circle');
       setAttrs(circle, { cx: p.x, cy: p.y, r: POINT_RADIUS });
       applyStrokeAttrs(circle, shape);
-      setAttrs(circle, { fill: resolveFillOrStroke(shape.color), 'fill-opacity': 1 });
+      setAttrs(circle, { fill: resolveFillOrStroke(shape.color), 'fill-opacity': roleFillOpacity(shape.role) });
       node = circle;
       break;
     }
@@ -186,6 +186,7 @@ export function renderShape(shape: Shape): RenderedShape {
     const anchor = labelAnchor(shape);
     label = createLabel(anchor, shape.label, resolveFillOrStroke(shape.color));
     label.setAttribute('data-id', `${shape.id}__label`);
+    label.setAttribute('opacity', String(roleFillOpacity(shape.role)));
   }
 
   return { id: shape.id, node, label };

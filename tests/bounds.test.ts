@@ -49,4 +49,20 @@ describe('computeViewBox', () => {
     expect(view.width).toBeGreaterThan(0);
     expect(view.height).toBeGreaterThan(0);
   });
+
+  it('excludes hidden scaffolding from the frame', () => {
+    const withHiddenCircles: Proposition = {
+      ...I1_LIKE,
+      steps: [
+        ...I1_LIKE.steps,
+        { set: [{ targets: ['c1', 'c2'], role: 'hidden' }] },
+      ],
+    };
+    const view = computeViewBox(stateAt(withHiddenCircles, withHiddenCircles.steps.length));
+    // Without the circles, only the points A(-1,0), B(1,0), C(0,√3) and
+    // segment AB remain: the frame shrinks well inside the circle extents.
+    expect(view.x).toBeGreaterThan(-2);
+    expect(view.x + view.width).toBeLessThan(2);
+    expect(view.y + view.height).toBeLessThan(2.5);
+  });
 });

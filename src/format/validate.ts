@@ -20,7 +20,7 @@ const KNOWN_ADD_OPS: readonly AddOpKind[] = [
 ];
 
 const KNOWN_COLORS = ['black', 'red', 'yellow', 'blue', 'construction'];
-const KNOWN_ROLES = ['normal', 'construction'];
+const KNOWN_ROLES = ['normal', 'construction', 'hidden'];
 
 export interface ValidationResult {
   readonly valid: boolean;

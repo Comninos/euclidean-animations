@@ -152,7 +152,7 @@ Circle–circle and line–circle intersections have two solutions. They are ord
 
 The visual style is monochrome by default: thin platonic lines, no fills, with the current step's geometry always rendered in red (the accent color) via the player chrome — not something an author sets. Per-element color is an optional deviation an author can reach for (e.g. to distinguish two compass circles): `color: "red" | "yellow" | "blue" | "black"` on an `add` op, named and mapped through the theme palette in `src/render/style.ts`. It defaults to `black` (ink).
 
-Setting `role: "construction"` on an element (via `set`) demotes it to a thin, dashed, faded line — used to de-emphasize scaffolding once the result is drawn.
+Setting `role: "construction"` on an element (via `set`) demotes it to a thin, dashed, faded line — used to de-emphasize scaffolding once the result is drawn. Setting `role: "hidden"` fades it out entirely (and excludes it from the auto-computed frame), the way Byrne's plates simply omit a cited sub-construction — e.g. I.2 hides the equilateral-triangle circles once D exists. Hidden elements stay referenceable and can be un-hidden by a later `set`.
 
 A step's `highlight: [ids...]` marks existing elements (from this step or any earlier one) as "current" for that step, so they render in red alongside whatever the step adds — e.g. calling out the two sides just proved equal in a QED step.
 

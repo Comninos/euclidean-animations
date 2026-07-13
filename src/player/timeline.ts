@@ -229,7 +229,7 @@ export class Timeline {
       const before = currentScene.shapes.get(id);
       const after = nextScene.shapes.get(id);
       if (!entry || !before || !after) continue;
-      const handle = animateRestyle(entry.node, before, after);
+      const handle = animateRestyle(entry.node, before, after, entry.label);
       groupHandles.push(handle);
     }
 

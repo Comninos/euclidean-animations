@@ -73,7 +73,9 @@ export function computeViewBox(scene: Scene): ViewBox {
   const b: Bounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
   for (const id of scene.order) {
     const shape = scene.shapes.get(id);
-    if (shape) includeShape(b, shape);
+    // Hidden scaffolding draws nothing in the final scene, so it should
+    // not stretch the frame either.
+    if (shape && shape.role !== 'hidden') includeShape(b, shape);
   }
 
   if (!Number.isFinite(b.minX)) {

@@ -15,7 +15,7 @@ export interface Point {
 export type ColorName = 'black' | 'red' | 'yellow' | 'blue' | 'construction';
 
 /** Visual "role" a shape can be demoted/promoted to via a `set` step. */
-export type ShapeRole = 'normal' | 'construction';
+export type ShapeRole = 'normal' | 'construction' | 'hidden';
 
 interface ShapeBase {
   readonly id: string;

@@ -94,11 +94,20 @@ export function resolveStyle(color: ColorName, role: ShapeRole): ResolvedStyle {
   return {
     stroke: resolveFillOrStroke(color),
     strokeWidth: isConstruction ? STROKE_WIDTH.construction : STROKE_WIDTH.normal,
-    strokeOpacity: isConstruction ? CONSTRUCTION_OPACITY : 1,
+    // 'hidden' keeps the shape in the scene (ids stay referenceable, and
+    // un-hiding crossfades back) but draws nothing — used to remove
+    // scaffolding entirely once it has served its purpose, the way
+    // Byrne's plates simply omit cited sub-constructions.
+    strokeOpacity: role === 'hidden' ? 0 : isConstruction ? CONSTRUCTION_OPACITY : 1,
     strokeDasharray: isConstruction ? CONSTRUCTION_DASH : null,
     lineCap: 'round',
     lineJoin: 'round',
   };
+}
+
+/** Opacity for a shape's label (and a point's solid fill) under a role. */
+export function roleFillOpacity(role: ShapeRole): number {
+  return role === 'hidden' ? 0 : 1;
 }
 
 /** Convenience: resolve style directly from a resolved kernel Shape. */

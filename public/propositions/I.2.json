@@ -1,88 +1,228 @@
 {
   "id": "I.2",
   "title": "From a given point to draw a straight line equal to a given straight line.",
-  "given": { "A": [-1.6, -0.8], "B": [0.2, -0.8], "C": [1.3, 0.5] },
+  "given": {
+    "A": [
+      -0.5,
+      0
+    ],
+    "B": [
+      0.5,
+      0
+    ],
+    "C": [
+      1.9,
+      -0.9
+    ]
+  },
   "steps": [
     {
       "id": "given-points",
       "text": "Let A be the given point, and BC the given straight line. It is required to draw from the point A a straight line equal to BC.",
       "add": [
-        { "op": "point", "id": "A", "label": "A" },
-        { "op": "point", "id": "B", "label": "B" },
-        { "op": "point", "id": "C", "label": "C" },
-        { "op": "segment", "id": "BC", "from": "B", "to": "C" }
+        {
+          "op": "point",
+          "id": "A",
+          "label": "A"
+        },
+        {
+          "op": "point",
+          "id": "B",
+          "label": "B"
+        },
+        {
+          "op": "point",
+          "id": "C",
+          "label": "C"
+        },
+        {
+          "op": "segment",
+          "id": "BC",
+          "from": "B",
+          "to": "C"
+        }
       ]
     },
     {
       "id": "join-AB",
       "text": "Join AB; and on AB construct the equilateral triangle DAB (Prop. I.1).",
       "add": [
-        { "op": "segment", "id": "AB", "from": "A", "to": "B" }
+        {
+          "op": "segment",
+          "id": "AB",
+          "from": "A",
+          "to": "B"
+        }
       ]
     },
     {
       "id": "equilateral-circles",
       "text": "With centre A, radius AB, describe a circle; with centre B, radius BA, describe another.",
       "add": [
-        { "op": "circle", "id": "eqc1", "center": "A", "through": "B" },
-        { "op": "circle", "id": "eqc2", "center": "B", "through": "A" }
+        {
+          "op": "circle",
+          "id": "eqc1",
+          "center": "A",
+          "through": "B"
+        },
+        {
+          "op": "circle",
+          "id": "eqc2",
+          "center": "B",
+          "through": "A"
+        }
       ]
     },
     {
       "id": "find-D",
       "text": "Let D be the point where the circles cut one another, and join DA, DB.",
       "add": [
-        { "op": "intersect", "id": "D", "of": ["eqc1", "eqc2"], "pick": 0, "label": "D" },
-        { "op": "segment", "id": "DA", "from": "D", "to": "A" },
-        { "op": "segment", "id": "DB", "from": "D", "to": "B" }
+        {
+          "op": "intersect",
+          "id": "D",
+          "of": [
+            "eqc1",
+            "eqc2"
+          ],
+          "pick": 0,
+          "label": "D"
+        },
+        {
+          "op": "segment",
+          "id": "DA",
+          "from": "D",
+          "to": "A"
+        },
+        {
+          "op": "segment",
+          "id": "DB",
+          "from": "D",
+          "to": "B"
+        }
       ],
       "set": [
-        { "targets": ["eqc1", "eqc2"], "role": "construction" }
+        {
+          "targets": [
+            "eqc1",
+            "eqc2"
+          ],
+          "role": "hidden"
+        }
       ]
     },
     {
       "id": "produce-AE-BF",
       "text": "Produce the straight lines AE, BF in a straight line with DA, DB.",
       "add": [
-        { "op": "extend", "id": "E", "from": "D", "through": "A", "distance": 3.9, "label": "E" },
-        { "op": "extend", "id": "F", "from": "D", "through": "B", "distance": 3.9, "label": "F" },
-        { "op": "segment", "id": "AE", "from": "A", "to": "E" },
-        { "op": "segment", "id": "BF", "from": "B", "to": "F" }
+        {
+          "op": "extend",
+          "id": "E",
+          "from": "D",
+          "through": "A",
+          "distance": 3.0,
+          "label": "E"
+        },
+        {
+          "op": "extend",
+          "id": "F",
+          "from": "D",
+          "through": "B",
+          "distance": 3.0,
+          "label": "F"
+        },
+        {
+          "op": "segment",
+          "id": "AE",
+          "from": "A",
+          "to": "E"
+        },
+        {
+          "op": "segment",
+          "id": "BF",
+          "from": "B",
+          "to": "F"
+        }
       ]
     },
     {
       "id": "circle-CGH",
       "text": "With centre B, and radius BC, describe the circle CGH, cutting BF at the point G.",
       "add": [
-        { "op": "circle", "id": "cBC", "center": "B", "through": "C" },
-        { "op": "intersect", "id": "G", "of": ["cBC", "BF"], "pick": 1, "label": "G" }
+        {
+          "op": "circle",
+          "id": "cBC",
+          "center": "B",
+          "through": "C"
+        },
+        {
+          "op": "intersect",
+          "id": "G",
+          "of": [
+            "cBC",
+            "BF"
+          ],
+          "pick": 1,
+          "label": "G"
+        }
       ]
     },
     {
       "id": "circle-GKL",
       "text": "With centre D, and radius DG, describe the circle GKL, cutting AE at the point L.",
       "add": [
-        { "op": "circle", "id": "cDG", "center": "D", "through": "G" },
-        { "op": "intersect", "id": "L", "of": ["cDG", "AE"], "pick": 1, "label": "L" }
+        {
+          "op": "circle",
+          "id": "cDG",
+          "center": "D",
+          "through": "G"
+        },
+        {
+          "op": "intersect",
+          "id": "L",
+          "of": [
+            "cDG",
+            "AE"
+          ],
+          "pick": 1,
+          "label": "L"
+        }
       ],
       "set": [
-        { "targets": ["cBC"], "role": "construction" }
+        {
+          "targets": [
+            "cBC"
+          ],
+          "role": "construction"
+        }
       ]
     },
     {
       "id": "draw-AL",
       "text": "Join AL. Then AL shall be equal to BC.",
       "add": [
-        { "op": "segment", "id": "AL", "from": "A", "to": "L" }
+        {
+          "op": "segment",
+          "id": "AL",
+          "from": "A",
+          "to": "L"
+        }
       ],
       "set": [
-        { "targets": ["cDG"], "role": "construction" }
+        {
+          "targets": [
+            "cDG"
+          ],
+          "role": "construction"
+        }
       ]
     },
     {
       "id": "qed",
       "text": "For DA = DB and DL = DG, and DB, DG were each reduced by DA, DB respectively (equals from equals); therefore the remainder AL = the remainder BG = BC. Wherefore AL is equal to BC, as was required.",
-      "highlight": ["AL", "BC"]
+      "highlight": [
+        "AL",
+        "BC"
+      ]
     }
   ]
 }
