@@ -10,22 +10,22 @@
         { "op": "point", "id": "A", "label": "A" },
         { "op": "point", "id": "B", "label": "B" },
         { "op": "point", "id": "C", "label": "C" },
-        { "op": "segment", "id": "BC", "from": "B", "to": "C", "color": "blue" }
+        { "op": "segment", "id": "BC", "from": "B", "to": "C" }
       ]
     },
     {
       "id": "join-AB",
       "text": "Join AB; and on AB construct the equilateral triangle DAB (Prop. I.1).",
       "add": [
-        { "op": "segment", "id": "AB", "from": "A", "to": "B", "color": "black" }
+        { "op": "segment", "id": "AB", "from": "A", "to": "B" }
       ]
     },
     {
       "id": "equilateral-circles",
       "text": "With centre A, radius AB, describe a circle; with centre B, radius BA, describe another.",
       "add": [
-        { "op": "circle", "id": "eqc1", "center": "A", "through": "B", "color": "red" },
-        { "op": "circle", "id": "eqc2", "center": "B", "through": "A", "color": "yellow" }
+        { "op": "circle", "id": "eqc1", "center": "A", "through": "B" },
+        { "op": "circle", "id": "eqc2", "center": "B", "through": "A" }
       ]
     },
     {
@@ -33,8 +33,8 @@
       "text": "Let D be the point where the circles cut one another, and join DA, DB.",
       "add": [
         { "op": "intersect", "id": "D", "of": ["eqc1", "eqc2"], "pick": 0, "label": "D" },
-        { "op": "segment", "id": "DA", "from": "D", "to": "A", "color": "red" },
-        { "op": "segment", "id": "DB", "from": "D", "to": "B", "color": "yellow" }
+        { "op": "segment", "id": "DA", "from": "D", "to": "A" },
+        { "op": "segment", "id": "DB", "from": "D", "to": "B" }
       ],
       "set": [
         { "targets": ["eqc1", "eqc2"], "role": "construction" }
@@ -54,7 +54,7 @@
       "id": "circle-BC",
       "text": "With centre B, and radius BC, describe the circle CGE, cutting DB produced at G.",
       "add": [
-        { "op": "circle", "id": "cBC", "center": "B", "through": "C", "color": "blue" },
+        { "op": "circle", "id": "cBC", "center": "B", "through": "C" },
         { "op": "intersect", "id": "G", "of": ["cBC", "rayDB"], "pick": 1, "label": "G" }
       ]
     },
@@ -72,7 +72,7 @@
       "id": "circle-DG",
       "text": "With centre D, and radius DG, describe the circle GLH, cutting DA produced at L.",
       "add": [
-        { "op": "circle", "id": "cDG", "center": "D", "through": "G", "color": "red" },
+        { "op": "circle", "id": "cDG", "center": "D", "through": "G" },
         { "op": "intersect", "id": "L", "of": ["cDG", "rayDA"], "pick": 1, "label": "L" }
       ],
       "set": [
@@ -83,7 +83,7 @@
       "id": "draw-AL",
       "text": "Join AL. Then AL shall be equal to BC.",
       "add": [
-        { "op": "segment", "id": "AL", "from": "A", "to": "L", "color": "black" }
+        { "op": "segment", "id": "AL", "from": "A", "to": "L" }
       ],
       "set": [
         { "targets": ["cDG", "rayDA"], "role": "construction" }

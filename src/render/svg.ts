@@ -46,8 +46,7 @@ function applyStrokeAttrs(node: SVGElement, shape: Shape): void {
     'stroke-dasharray': style.strokeDasharray,
     'stroke-linecap': style.lineCap,
     'stroke-linejoin': style.lineJoin,
-    fill: style.fill ?? 'none',
-    'fill-opacity': style.fill ? style.fillOpacity : undefined,
+    fill: 'none',
   });
 }
 
@@ -164,17 +163,6 @@ export function renderShape(shape: Shape): RenderedShape {
       node = poly;
       break;
     }
-    case 'sector': {
-      const c = toSvgPoint(shape.center);
-      const start = toSvgPoint(shape.start);
-      const end = toSvgPoint(shape.end);
-      const sector = el('path');
-      const d = `M ${c.x} ${c.y} L ${start.x} ${start.y} A ${shape.radius} ${shape.radius} 0 0 0 ${end.x} ${end.y} Z`;
-      setAttrs(sector, { d });
-      applyStrokeAttrs(sector, shape);
-      node = sector;
-      break;
-    }
     case 'angleMark': {
       const mark = el('path');
       setAttrs(mark, { d: angleMarkPath(shape) });
@@ -220,8 +208,6 @@ function labelAnchor(shape: Shape): Point {
       const sum = shape.points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
       return { x: sum.x / n, y: sum.y / n };
     }
-    case 'sector':
-      return shape.center;
     case 'angleMark':
       return shape.vertex;
     default:

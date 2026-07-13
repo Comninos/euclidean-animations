@@ -9,21 +9,21 @@
       "add": [
         { "op": "point", "id": "A", "label": "A" },
         { "op": "point", "id": "B", "label": "B" },
-        { "op": "segment", "id": "AB", "from": "A", "to": "B", "color": "black" }
+        { "op": "segment", "id": "AB", "from": "A", "to": "B" }
       ]
     },
     {
       "id": "circle-1",
       "text": "With centre A and radius AB, describe the circle BCD.",
       "add": [
-        { "op": "circle", "id": "c1", "center": "A", "through": "B", "color": "red" }
+        { "op": "circle", "id": "c1", "center": "A", "through": "B" }
       ]
     },
     {
       "id": "circle-2",
       "text": "With centre B and radius BA, describe the circle ACE.",
       "add": [
-        { "op": "circle", "id": "c2", "center": "B", "through": "A", "color": "blue" }
+        { "op": "circle", "id": "c2", "center": "B", "through": "A" }
       ]
     },
     {
@@ -37,8 +37,8 @@
       "id": "draw-CA-CB",
       "text": "…draw the straight lines CA and CB to the points A and B.",
       "add": [
-        { "op": "segment", "id": "CA", "from": "C", "to": "A", "color": "red" },
-        { "op": "segment", "id": "CB", "from": "C", "to": "B", "color": "blue" }
+        { "op": "segment", "id": "CA", "from": "C", "to": "A" },
+        { "op": "segment", "id": "CB", "from": "C", "to": "B" }
       ],
       "set": [
         { "targets": ["c1", "c2"], "role": "construction" }
@@ -48,7 +48,7 @@
       "id": "qed",
       "text": "Then ABC is an equilateral triangle, standing on the given straight line AB.",
       "add": [
-        { "op": "polygon", "id": "ABC", "of": ["A", "B", "C"], "fill": "yellow", "color": "black" }
+        { "op": "polygon", "id": "ABC", "of": ["A", "B", "C"] }
       ],
       "highlight": ["AB", "CA", "CB"]
     }

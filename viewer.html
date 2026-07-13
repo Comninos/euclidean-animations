@@ -10,18 +10,18 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      background: #FAF3E3;
+      background: #FFFCF0;
     }
     body.dark {
-      background: #1E1E1E;
-      color: #E6E0D3;
+      background: #0D0C0C;
+      color: #CECDC3;
     }
     body {
       display: flex;
       align-items: stretch;
       justify-content: stretch;
       font-family: Georgia, 'Times New Roman', serif;
-      color: #1B1B1B;
+      color: #0D0C0C;
     }
     euclid-player {
       flex: 1;
@@ -86,8 +86,8 @@
       customElements.whenDefined('euclid-player').then(syncPageColors);
 
       function applyTheme(theme) {
-        // Any theme name registered in src/render/style.ts (dark, mono,
-        // mono-dark, ...); 'light' or anything invalid means the default.
+        // Only 'dark' is a real theme attribute; 'light' or anything
+        // invalid means the default (no attribute).
         if (typeof theme === 'string' && theme !== 'light' && /^[a-z][a-z0-9-]*$/i.test(theme)) {
           player.setAttribute('theme', theme);
         } else {

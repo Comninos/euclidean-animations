@@ -47,7 +47,7 @@ const propositionI1: Proposition = {
     {
       id: 'qed',
       text: 'Then ABC is an equilateral triangle.',
-      add: [{ op: 'polygon', id: 'ABC', of: ['A', 'B', 'C'], fill: 'yellow' }],
+      add: [{ op: 'polygon', id: 'ABC', of: ['A', 'B', 'C'] }],
       highlight: ['AB', 'CA', 'CB'],
     },
   ],
@@ -86,7 +86,7 @@ describe('stateAt: incremental evaluation', () => {
     expect(c.at.y).toBeCloseTo(Math.sqrt(3), 10);
   });
 
-  it('final scene contains the filled equilateral triangle with correct vertices', () => {
+  it('final scene contains the equilateral triangle outline with correct vertices', () => {
     const scene = stateAt(propositionI1, propositionI1.steps.length);
     const tri = scene.shapes.get('ABC') as PolygonShape;
     expect(tri.points).toEqual([
@@ -94,7 +94,6 @@ describe('stateAt: incremental evaluation', () => {
       { x: 1, y: 0 },
       { x: 0, y: Math.sqrt(3) },
     ]);
-    expect(tri.fill).toBe('yellow');
   });
 
   it('the "set" step demotes both circles to construction role', () => {

@@ -212,25 +212,6 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         points: pts,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.fill !== undefined ? { fill: op.fill } : {}),
-        ...(op.label !== undefined ? { label: op.label } : {}),
-      });
-      break;
-    }
-    case 'sector': {
-      const center = requirePoint(state, op.center, stepId);
-      const start = requirePoint(state, op.start, stepId);
-      const end = requirePoint(state, op.end, stepId);
-      putShape(state, op.id, {
-        kind: 'sector',
-        id: op.id,
-        center,
-        start,
-        end,
-        radius: distance(center, start),
-        color: resolveColor(op.color, 'black'),
-        role: 'normal',
-        ...(op.fill !== undefined ? { fill: op.fill } : {}),
         ...(op.label !== undefined ? { label: op.label } : {}),
       });
       break;

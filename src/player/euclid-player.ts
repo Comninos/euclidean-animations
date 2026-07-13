@@ -12,52 +12,12 @@ import { Timeline } from './timeline';
 import { stateAt } from '../kernel/evaluate';
 import { computeViewBox } from '../kernel/bounds';
 import { createStageSvg } from '../render/svg';
-import {
-  DEFAULT_THEME,
-  LABEL_FONT_FAMILY,
-  STROKE_WIDTH_MINIMAL,
-  THEMES,
-  themeCssDeclarations,
-} from '../render/style';
-
-/** CSS for every registered theme: palette/accent variables, plus the
- * behavioral rules for `accentCurrentStep` (current-step geometry takes
- * the accent color) and `minimal` (hairline strokes, no fills, smaller
- * points, calm entrances via --euclid-anim). CSS rules outrank SVG
- * presentation attributes, which is what lets a theme restyle
- * already-rendered shapes without a re-render. */
-function themeBlocks(): string {
-  return Object.entries(THEMES)
-    .map(([name, theme]) => {
-      const host = `:host([theme="${name}"])`;
-      const stage = `${host} svg.euclid-stage`;
-      const rules: string[] = [
-        `${host} {\n    ${themeCssDeclarations(theme)}${theme.minimal ? '\n    --euclid-anim: minimal;' : ''}\n  }`,
-      ];
-      if (theme.minimal) {
-        rules.push(
-          `${stage} [data-role="normal"] { stroke-width: ${STROKE_WIDTH_MINIMAL.normal}; }`,
-          `${stage} [data-role="construction"] { stroke-width: ${STROKE_WIDTH_MINIMAL.construction}; }`,
-          `${stage} [data-kind="polygon"], ${stage} [data-kind="sector"] { fill: none; }`,
-          `${stage} circle[data-kind="point"] { r: ${STROKE_WIDTH_MINIMAL.pointRadius}px; }`
-        );
-      }
-      if (theme.accentCurrentStep) {
-        rules.push(
-          `${stage} [data-current]:not(text) { stroke: var(--euclid-accent); }`,
-          `${stage} [data-current][data-kind="point"] { fill: var(--euclid-accent); }`,
-          `${stage} text[data-current] { fill: var(--euclid-accent); }`
-        );
-      }
-      return rules.join('\n  ');
-    })
-    .join('\n  ');
-}
+import { DARK_PALETTE, LABEL_FONT_FAMILY, LIGHT_PALETTE, paletteCssDeclarations } from '../render/style';
 
 const TEMPLATE = `
 <style>
   :host {
-    ${themeCssDeclarations(DEFAULT_THEME)}
+    ${paletteCssDeclarations(LIGHT_PALETTE)}
     /* alpha tones derived from the ink color, for chrome (borders etc.) */
     --euclid-line: color-mix(in srgb, var(--euclid-black) 14%, transparent);
     --euclid-line-strong: color-mix(in srgb, var(--euclid-black) 38%, transparent);
@@ -72,7 +32,14 @@ const TEMPLATE = `
     overflow: hidden;
     --euclid-aspect: 1.375; /* width / height, replaced once the proposition loads */
   }
-  ${themeBlocks()}
+  :host([theme="dark"]) {
+    ${paletteCssDeclarations(DARK_PALETTE)}
+  }
+  /* The current step's geometry (data-current, set by the timeline) always
+     renders in the accent color, so the newest construction stands out. */
+  svg.euclid-stage [data-current]:not(text) { stroke: var(--euclid-accent); }
+  svg.euclid-stage [data-current][data-kind="point"] { fill: var(--euclid-accent); }
+  svg.euclid-stage text[data-current] { fill: var(--euclid-accent); }
   * { box-sizing: border-box; }
   .stage-wrap {
     position: relative;

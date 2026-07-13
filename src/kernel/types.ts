@@ -11,7 +11,7 @@ export interface Point {
   readonly y: number;
 }
 
-/** Named color roles that map through the Byrne palette (see render/style.ts). */
+/** Named color roles that map through the theme palette (see render/style.ts). */
 export type ColorName = 'black' | 'red' | 'yellow' | 'blue' | 'construction';
 
 /** Visual "role" a shape can be demoted/promoted to via a `set` step. */
@@ -61,21 +61,10 @@ export interface CircleShape extends ShapeBase {
   readonly through?: Point;
 }
 
-/** A filled polygonal region (e.g. the completed triangle). */
+/** An outline polygonal region (e.g. the completed triangle), stroke-only. */
 export interface PolygonShape extends ShapeBase {
   readonly kind: 'polygon';
   readonly points: readonly Point[];
-  readonly fill?: ColorName;
-}
-
-/** A circular sector (pie-slice), used for Byrne-style filled angle wedges. */
-export interface SectorShape extends ShapeBase {
-  readonly kind: 'sector';
-  readonly center: Point;
-  readonly start: Point;
-  readonly end: Point;
-  readonly radius: number;
-  readonly fill?: ColorName;
 }
 
 /** A small arc/wedge marking an angle at a vertex, without an explicit fill radius. */
@@ -93,7 +82,6 @@ export type Shape =
   | SegmentShape
   | CircleShape
   | PolygonShape
-  | SectorShape
   | AngleMarkShape;
 
 export type ShapeKind = Shape['kind'];

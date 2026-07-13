@@ -1,10 +1,10 @@
 # Euclidean Animations
 
-Animated Euclidean constructions in the spirit of [Oliver Byrne's 1847 edition of Euclid's *Elements*](https://www.c82.net/euclid/) — each proposition rendered as a step-by-step, colored geometric construction that plays in the browser and can be embedded anywhere with an `<iframe>`.
+Animated Euclidean constructions — each proposition rendered as a step-by-step geometric construction, thin platonic lines with the current step picked out in red, that plays in the browser and can be embedded anywhere with an `<iframe>`.
 
 - **Geometry kernel** — exact construction math (intersections, distances, extensions), no rendering concerns.
 - **Declarative propositions** — each proposition is a single JSON file describing construction steps; no code required to add one.
-- **SVG renderer** — crisp, scalable Byrne-style graphics with compass-sweep and draw-on animations.
+- **SVG renderer** — crisp, scalable hairline graphics with compass-sweep and draw-on animations.
 - **`<euclid-player>` web component** — play, pause, step forward/backward, restart. Stepping is *logical*: one step = one beat of the construction, not a unit of time.
 
 ## Quick start
@@ -35,20 +35,11 @@ In Obsidian, put the `<iframe>` tag directly in a note; Obsidian Publish renders
 
 ### Theming embeds
 
-Themes live in one registry in `src/render/style.ts` (`THEMES`) — add an entry there and it's immediately usable everywhere. Built-in:
-
-| name | look |
-|------|------|
-| *(default)* | Byrne light: colored construction on cream |
-| `dark` | Byrne dark: same hues, brightened, on a dark ground |
-| `mono` | Minimal: hairline ink lines on paper, no fills, **current step in red** |
-| `mono-dark` | The same, light ink on near-black |
-
-A theme is a palette plus optional behaviors: `accentCurrentStep` renders the most recent step's geometry in the accent color, and `minimal` switches to hairline strokes, unfilled polygons, smaller points, and calm fade entrances (no pops or pulses; lines still draw on).
+There are exactly two themes, both Flexoki-based: the default (no `theme` attribute) is light-on-paper, and `theme="dark"` is light ink on a near-black ground. Both are declared as plain CSS custom properties in `src/render/style.ts` / `src/player/euclid-player.ts` (`--euclid-*` on `:host`), which is what lets a theme switch restyle already-rendered shapes instantly without a re-render.
 
 Select a theme per embed:
 
-- `viewer.html?prop=I.1&theme=mono-dark` — any registered theme name.
+- `viewer.html?prop=I.1&theme=dark` — the only non-default theme name.
 - `...&bg=%23262626` — override the background with an exact color (URL-encoded hex) so the embed blends into your page.
 
 To follow **Obsidian's own light/dark toggle live** (which is independent of the OS/browser preference), add this to your Obsidian Publish `publish.js`. It answers each embed when it loads and re-broadcasts whenever the reader flips the theme:
@@ -56,10 +47,8 @@ To follow **Obsidian's own light/dark toggle live** (which is independent of the
 ```js
 (function () {
   var FRAMES = 'iframe[src*="euclidean-animations/viewer.html"]';
-  var LIGHT_THEME = 'light'; // e.g. 'mono' for the minimal look
-  var DARK_THEME = 'dark';   // e.g. 'mono-dark'
   function theme() {
-    return document.body.classList.contains('theme-dark') ? DARK_THEME : LIGHT_THEME;
+    return document.body.classList.contains('theme-dark') ? 'dark' : 'light';
   }
   function send(frame) {
     if (frame.contentWindow) {
@@ -99,7 +88,7 @@ Add a file under `public/propositions/` (e.g. `I.5.json`). No rebuild of the Jav
     { "text": "Caption shown while this step plays.",
       "add": [ /* elements constructed in this step */ ],
       "set": [ /* restyle earlier elements, e.g. demote to construction lines */ ],
-      "highlight": [ /* ids to pulse */ ]
+      "highlight": [ /* ids to render in red for this step */ ]
     }
   ]
 }
@@ -120,7 +109,7 @@ The `<euclid-player>` element sizes itself from its width by default (gallery-st
 | `line` / `ray` | `from`, `to` | infinite line / ray through two points |
 | `circle` | `center`, `through` | compass circle |
 | `intersect` | `of: [a, b]`, `pick` | intersection point of two elements |
-| `polygon` | `of: [p1, p2, ...]` | filled region |
+| `polygon` | `of: [p1, p2, ...]` | outline (stroke-only) polygon |
 
 ### The `pick` convention
 
@@ -128,14 +117,18 @@ Circle–circle and line–circle intersections have two solutions. They are ord
 
 ### Styling
 
-Colors are named, mapped through the Byrne palette in `src/render/style.ts`: `red`, `yellow`, `blue`, `black`. Setting `role: "construction"` on an element (via `set`) demotes it to a thin, dashed, faded line — used to de-emphasize scaffolding once the result is drawn.
+The visual style is monochrome by default: thin platonic lines, no fills, with the current step's geometry always rendered in red (the accent color) via the player chrome — not something an author sets. Per-element color is an optional deviation an author can reach for (e.g. to distinguish two compass circles): `color: "red" | "yellow" | "blue" | "black"` on an `add` op, named and mapped through the theme palette in `src/render/style.ts`. It defaults to `black` (ink).
+
+Setting `role: "construction"` on an element (via `set`) demotes it to a thin, dashed, faded line — used to de-emphasize scaffolding once the result is drawn.
+
+A step's `highlight: [ids...]` marks existing elements (from this step or any earlier one) as "current" for that step, so they render in red alongside whatever the step adds — e.g. calling out the two sides just proved equal in a QED step.
 
 ## Architecture
 
 ```
 src/kernel/    pure geometry math + step evaluator (no DOM)
 src/format/    JSON schema types + validation
-src/render/    Byrne styles, static SVG rendering, rAF tween animations
+src/render/    minimal palette/styles, static SVG rendering, rAF tween animations
 src/player/    step-indexed timeline + <euclid-player> custom element
 ```
 

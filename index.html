@@ -3,50 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Byrne's Euclid, Animated</title>
+  <title>Euclid's Elements, Animated</title>
   <style>
     :root {
-      --cream: #FAF3E3;
-      --black: #1B1B1B;
-      --red: #D13438;
-      --yellow: #F1C232;
-      --blue: #2E5FA3;
+      --paper: #FFFCF0;
+      --ink: #0D0C0C;
+      --red: #C03E35;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: var(--cream);
-      color: var(--black);
+      background: var(--paper);
+      color: var(--ink);
       font-family: Georgia, 'Times New Roman', serif;
     }
     header {
       padding: 2.5rem 1.5rem 1.5rem;
       text-align: center;
-      border-bottom: 3px solid var(--black);
+      border-bottom: 1px solid var(--ink);
     }
     header h1 {
       margin: 0 0 0.4rem;
       font-size: 2rem;
+      font-weight: normal;
       letter-spacing: 0.02em;
     }
     header p {
       margin: 0;
       font-style: italic;
-      opacity: 0.8;
+      opacity: 0.75;
       max-width: 46em;
       margin-inline: auto;
-    }
-    .swatches {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-    .swatch {
-      width: 1.1rem;
-      height: 1.1rem;
-      border-radius: 50%;
-      border: 1px solid rgba(27,27,27,0.3);
     }
     main {
       max-width: 1100px;
@@ -58,11 +45,9 @@
     }
     figure {
       margin: 0;
-      background: #fff8ea;
-      border: 1px solid rgba(27,27,27,0.15);
-      border-radius: 6px;
+      border: 1px solid rgba(13,12,12,0.2);
+      border-radius: 4px;
       overflow: hidden;
-      box-shadow: 0 1px 3px rgba(27,27,27,0.08);
     }
     figcaption {
       padding: 0.9rem 1.1rem 0.4rem;
@@ -95,7 +80,7 @@
       opacity: 0.65;
     }
     code {
-      background: rgba(27,27,27,0.06);
+      background: rgba(13,12,12,0.06);
       padding: 0.1em 0.35em;
       border-radius: 3px;
       font-size: 0.9em;
@@ -104,18 +89,11 @@
 </head>
 <body>
   <header>
-    <h1>Byrne's Euclid, Animated</h1>
+    <h1>Euclid's Elements, Animated</h1>
     <p>
-      A modern, animated take on Oliver Byrne's 1847 edition of Euclid's Elements —
-      each proposition constructed step by step, in color, straight from a declarative
-      description of the construction.
+      Each proposition constructed step by step, in thin platonic lines, straight from a
+      declarative description of the construction. The current step is picked out in red.
     </p>
-    <div class="swatches" aria-hidden="true">
-      <span class="swatch" style="background: var(--red)"></span>
-      <span class="swatch" style="background: var(--yellow)"></span>
-      <span class="swatch" style="background: var(--blue)"></span>
-      <span class="swatch" style="background: var(--black)"></span>
-    </div>
   </header>
   <main id="gallery">
     <figure>

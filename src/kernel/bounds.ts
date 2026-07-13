@@ -45,9 +45,6 @@ function includeShape(b: Bounds, shape: Shape): void {
     case 'polygon':
       for (const p of shape.points) include(b, p);
       break;
-    case 'sector':
-      include(b, shape.center, shape.radius);
-      break;
     case 'angleMark':
       include(b, shape.vertex);
       break;

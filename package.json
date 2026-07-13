@@ -1,7 +1,7 @@
 {
   "name": "euclidean-animations",
   "version": "0.1.0",
-  "description": "Animated Euclidean constructions in the spirit of Byrne's Euclid",
+  "description": "Animated Euclidean constructions, rendered as minimal platonic line diagrams",
   "type": "module",
   "private": true,
   "scripts": {

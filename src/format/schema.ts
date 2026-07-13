@@ -102,15 +102,6 @@ export interface FootOfPerpendicularAddOp extends AddOpBase {
 export interface PolygonAddOp extends AddOpBase {
   readonly op: 'polygon';
   readonly of: readonly string[];
-  readonly fill?: ColorName;
-}
-
-export interface SectorAddOp extends AddOpBase {
-  readonly op: 'sector';
-  readonly center: string;
-  readonly start: string;
-  readonly end: string;
-  readonly fill?: ColorName;
 }
 
 export interface AngleMarkAddOp extends AddOpBase {
@@ -132,7 +123,6 @@ export type AddOp =
   | PointAtDistanceAddOp
   | FootOfPerpendicularAddOp
   | PolygonAddOp
-  | SectorAddOp
   | AngleMarkAddOp;
 
 export type AddOpKind = AddOp['op'];

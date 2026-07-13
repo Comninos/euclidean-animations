@@ -13,7 +13,6 @@ import type { Scene, Shape } from '../kernel/types';
 import {
   CONSTRUCTION_DASH,
   CONSTRUCTION_OPACITY,
-  FILL_OPACITY,
   POINT_RADIUS,
   STROKE_WIDTH,
   resolveFillOrStroke,
@@ -30,11 +29,6 @@ export type Easing = (t: number) => number;
 export const easeLinear: Easing = (t) => t;
 export const easeInOutCubic: Easing = (t) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-export const easeOutBack: Easing = (t) => {
-  const c1 = 1.70158;
-  const c3 = c1 + 1;
-  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-};
 
 // ---------------------------------------------------------------------------
 // Tween: a single cancellable, instantly-completable rAF-driven animation.
@@ -181,27 +175,16 @@ export function runTweenGroup(handles: readonly TweenHandle[]): TweenGroupHandle
 // ---------------------------------------------------------------------------
 
 const DEFAULT_DURATION_MS = 650;
-const POINT_POP_DURATION_MS = 320;
+const POINT_FADE_DURATION_MS = 320;
 const LABEL_FADE_DURATION_MS = 420;
-const FILL_FADE_DURATION_MS = 500;
-const HIGHLIGHT_DURATION_MS = 700;
 const RESTYLE_DURATION_MS = 450;
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-/** Whether the active theme requests minimal animation (--euclid-anim:
- * minimal on the player host — see the theme registry in style.ts): calm
- * fades instead of pops, no highlight pulse. Checked live per tween so a
- * theme switch mid-session applies to the next animation. */
-function isMinimalAnim(node: Element): boolean {
-  return getComputedStyle(node).getPropertyValue('--euclid-anim').trim() === 'minimal';
-}
-
 /** A simple opacity fade-in on the node's inline style (inline style so it
- * layers over any theme CSS), used by minimal themes in place of shape
- * pops. Clears itself once done. */
+ * layers over any theme CSS). Clears itself once done. */
 function fadeInTween(node: SVGElement, durationMs: number): TweenHandle {
   node.style.opacity = '0';
   return runTween({
@@ -225,10 +208,10 @@ function setupDrawOn(node: SVGGeometryElement): void {
 
 /**
  * Animate a shape's entrance ("add") into the stage. Appends `rendered.node`
- * (and label, if present) to `container`, then animates draw-on / pop-in /
- * fade appropriate to the shape kind. Returns a cancellable,
- * instantly-finishable handle whose `finishInstantly` leaves the shape in
- * its correct static appearance (equivalent to `renderShape` output).
+ * (and label, if present) to `container`, then animates draw-on / fade
+ * appropriate to the shape kind. Returns a cancellable, instantly-finishable
+ * handle whose `finishInstantly` leaves the shape in its correct static
+ * appearance (equivalent to `renderShape` output).
  */
 export function animateAdd(
   container: SVGElement,
@@ -237,26 +220,12 @@ export function animateAdd(
 ): TweenGroupHandle {
   container.appendChild(rendered.node);
   const style = styleForShape(shape);
-  const minimal = isMinimalAnim(container);
   const handles: TweenHandle[] = [];
 
   switch (shape.kind) {
     case 'point': {
       const circle = rendered.node as SVGCircleElement;
-      if (minimal) {
-        handles.push(fadeInTween(circle, POINT_POP_DURATION_MS));
-        break;
-      }
-      circle.setAttribute('r', '0');
-      handles.push(
-        runTween({
-          durationMs: POINT_POP_DURATION_MS,
-          easing: easeOutBack,
-          onFrame: (t) => {
-            circle.setAttribute('r', String(Math.max(0, POINT_RADIUS * t)));
-          },
-        })
-      );
+      handles.push(fadeInTween(circle, POINT_FADE_DURATION_MS));
       break;
     }
     case 'segment':
@@ -306,8 +275,8 @@ export function animateAdd(
       arcPath.setAttribute('data-id', `${shape.id}__sweep`);
       arcPath.setAttribute('data-kind', 'circle');
       arcPath.setAttribute('data-role', shape.role);
-      // Inherit the current-step mark so accentCurrentStep themes draw the
-      // sweeping compass arc in the accent color, not just the final circle.
+      // Inherit the current-step mark so the sweeping compass arc draws in
+      // the accent color too, not just the final circle.
       if (rendered.node.hasAttribute('data-current')) arcPath.setAttribute('data-current', '');
       setupDrawOn(arcPath);
       container.replaceChild(arcPath, rendered.node);
@@ -328,45 +297,12 @@ export function animateAdd(
     }
     case 'polygon': {
       const poly = rendered.node as SVGPathElement;
-      const targetFillOpacity = style.fill ? style.fillOpacity : 0;
-      poly.setAttribute('fill-opacity', '0');
-      poly.setAttribute('stroke-opacity', '0');
-      handles.push(
-        runTween({
-          durationMs: FILL_FADE_DURATION_MS,
-          onFrame: (t) => {
-            poly.setAttribute('fill-opacity', String(lerp(0, targetFillOpacity, t)));
-            poly.setAttribute('stroke-opacity', String(lerp(0, style.strokeOpacity, t)));
-          },
-        })
-      );
-      break;
-    }
-    case 'sector': {
-      const sector = rendered.node as SVGPathElement;
-      const targetFillOpacity = style.fill ? style.fillOpacity : 0;
-      sector.setAttribute('fill-opacity', '0');
-      handles.push(
-        runTween({
-          durationMs: FILL_FADE_DURATION_MS,
-          onFrame: (t) => {
-            sector.setAttribute('fill-opacity', String(lerp(0, targetFillOpacity, t)));
-          },
-        })
-      );
+      handles.push(fadeInTween(poly, LABEL_FADE_DURATION_MS));
       break;
     }
     case 'angleMark': {
       const mark = rendered.node as SVGPathElement;
-      mark.setAttribute('stroke-opacity', '0');
-      handles.push(
-        runTween({
-          durationMs: LABEL_FADE_DURATION_MS,
-          onFrame: (t) => {
-            mark.setAttribute('stroke-opacity', String(lerp(0, style.strokeOpacity, t)));
-          },
-        })
-      );
+      handles.push(fadeInTween(mark, LABEL_FADE_DURATION_MS));
       break;
     }
     default: {
@@ -378,21 +314,7 @@ export function animateAdd(
   if (rendered.label) {
     const label = rendered.label;
     container.appendChild(label);
-    if (minimal) {
-      handles.push(fadeInTween(label, LABEL_FADE_DURATION_MS));
-    } else {
-      label.style.opacity = '0';
-      const baseY = Number(label.getAttribute('y'));
-      handles.push(
-        runTween({
-          durationMs: LABEL_FADE_DURATION_MS,
-          onFrame: (t) => {
-            label.style.opacity = String(t);
-            label.setAttribute('y', String(baseY + (1 - t) * 0.08));
-          },
-        })
-      );
-    }
+    handles.push(fadeInTween(label, LABEL_FADE_DURATION_MS));
   }
 
   return runTweenGroup(handles);
@@ -423,15 +345,6 @@ export function animateRestyle(node: SVGElement, from: Shape, to: Shape): TweenG
         if (fromStyle.strokeDasharray) node.setAttribute('stroke-dasharray', fromStyle.strokeDasharray);
         else node.removeAttribute('stroke-dasharray');
       }
-      if (toStyle.fill || fromStyle.fill) {
-        const fillOpacity = lerp(
-          fromStyle.fill ? fromStyle.fillOpacity : 0,
-          toStyle.fill ? toStyle.fillOpacity : 0,
-          t
-        );
-        node.setAttribute('fill', t < 0.5 ? fromStyle.fill ?? 'none' : toStyle.fill ?? 'none');
-        node.setAttribute('fill-opacity', String(fillOpacity));
-      }
     },
     onDone: () => {
       node.setAttribute('stroke', toStyle.stroke);
@@ -439,41 +352,10 @@ export function animateRestyle(node: SVGElement, from: Shape, to: Shape): TweenG
       node.setAttribute('stroke-width', String(toStyle.strokeWidth));
       if (toStyle.strokeDasharray) node.setAttribute('stroke-dasharray', toStyle.strokeDasharray);
       else node.removeAttribute('stroke-dasharray');
-      if (toStyle.fill) {
-        node.setAttribute('fill', toStyle.fill);
-        node.setAttribute('fill-opacity', String(toStyle.fillOpacity));
-      }
       node.setAttribute('data-role', to.role);
     },
   });
 
-  return runTweenGroup([handle]);
-}
-
-// ---------------------------------------------------------------------------
-// Highlight pulse.
-// ---------------------------------------------------------------------------
-
-export function animateHighlight(node: SVGElement, baseStrokeWidth: number): TweenGroupHandle {
-  // Minimal themes forgo the width pulse — the current-step accent color
-  // already carries the emphasis, and pulsing fights the hairline look.
-  if (isMinimalAnim(node)) {
-    return runTweenGroup([runTween({ durationMs: 0, onFrame: () => {} })]);
-  }
-  const peakWidth = baseStrokeWidth * 2.2;
-  const handle = runTween({
-    durationMs: HIGHLIGHT_DURATION_MS,
-    easing: easeInOutCubic,
-    onFrame: (t) => {
-      // Up then down: triangular envelope peaking at t=0.5.
-      const envelope = t < 0.5 ? t * 2 : (1 - t) * 2;
-      const width = lerp(baseStrokeWidth, peakWidth, envelope);
-      node.setAttribute('stroke-width', String(width));
-    },
-    onDone: () => {
-      node.setAttribute('stroke-width', String(baseStrokeWidth));
-    },
-  });
   return runTweenGroup([handle]);
 }
 
@@ -495,23 +377,18 @@ export function applyStaticStyle(node: SVGElement, shape: Shape): void {
   node.removeAttribute('pathLength');
   node.style.strokeDashoffset = '';
   node.style.strokeDasharray = '';
-  if (style.fill) {
-    node.setAttribute('fill', style.fill);
-    node.setAttribute('fill-opacity', String(style.fillOpacity));
-  } else if (shape.kind === 'point') {
+  if (shape.kind === 'point') {
     node.setAttribute('fill', resolveFillOrStroke(shape.color));
     node.setAttribute('fill-opacity', '1');
+    node.setAttribute('r', String(POINT_RADIUS));
   } else {
     node.setAttribute('fill', 'none');
   }
   node.setAttribute('data-role', shape.role);
-  if (shape.kind === 'point') {
-    node.setAttribute('r', String(POINT_RADIUS));
-  }
 }
 
 // Re-export a couple of style constants some callers (timeline.ts) need
 // without importing style.ts directly, keeping animate.ts as the animation
 // surface API.
-export { CONSTRUCTION_DASH, CONSTRUCTION_OPACITY, FILL_OPACITY, STROKE_WIDTH };
+export { CONSTRUCTION_DASH, CONSTRUCTION_OPACITY, STROKE_WIDTH };
 export type { Scene };

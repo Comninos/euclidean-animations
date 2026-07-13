@@ -16,7 +16,6 @@ const KNOWN_ADD_OPS: readonly AddOpKind[] = [
   'pointAtDistance',
   'footOfPerpendicular',
   'polygon',
-  'sector',
   'angleMark',
 ];
 
@@ -57,8 +56,6 @@ function referencedIds(op: AddOp): readonly string[] {
       return [op.from, op.lineA, op.lineB];
     case 'polygon':
       return [...op.of];
-    case 'sector':
-      return [op.center, op.start, op.end];
     case 'angleMark':
       return [op.vertex, op.from, op.to];
     default: {

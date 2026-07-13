@@ -11,9 +11,8 @@
 import { stateAt } from '../kernel/evaluate';
 import type { Scene, Shape } from '../kernel/types';
 import type { Proposition } from '../format/schema';
-import { animateAdd, animateHighlight, animateRestyle, applyStaticStyle, prefersReducedMotion } from '../render/animate';
+import { animateAdd, animateRestyle, applyStaticStyle, prefersReducedMotion } from '../render/animate';
 import { renderShape, renderScene, type RenderedShape } from '../render/svg';
-import { STROKE_WIDTH } from '../render/style';
 
 export type PlayState = 'paused' | 'playing';
 
@@ -125,23 +124,29 @@ export class Timeline {
       if (node) this.stageEntries.set(id, { node, label });
     }
     this.container.appendChild(g);
-    this.markCurrentStep(this.addedIdsForStep(k));
+    this.markCurrentStep(this.currentStepIds(k));
     this.step = k;
     this.playState = 'paused';
     this.events.onStepChange?.(this.step, this.totalSteps);
     this.events.onPlayStateChange?.(this.playState);
   }
 
-  /** Ids of the shapes the k-th step (1-based) adds; empty at step 0. */
-  private addedIdsForStep(k: number): readonly string[] {
+  /** Ids of the shapes the k-th step (1-based) adds, unioned with the ids
+   * it lists in `highlight`; empty at step 0. Both sets render in red via
+   * the data-current attribute (see markCurrentStep). */
+  private currentStepIds(k: number): readonly string[] {
     const step = k > 0 ? this.prop.steps[k - 1] : undefined;
-    return step?.add?.map((op) => op.id) ?? [];
+    if (!step) return [];
+    const added = step.add?.map((op) => op.id) ?? [];
+    const highlighted = step.highlight ?? [];
+    return [...new Set([...added, ...highlighted])];
   }
 
   /** Tag the given shapes (and their labels) as the "current" step's
    * geometry via a data-current attribute, clearing it everywhere else.
-   * Themes with accentCurrentStep style [data-current] in the accent color
-   * so the newest construction stands out. */
+   * [data-current] elements render in the accent color (see
+   * euclid-player.ts) so the newest construction — and anything the step
+   * explicitly highlights — stands out. */
   private markCurrentStep(ids: readonly string[]): void {
     const current = new Set(ids);
     for (const [id, entry] of this.stageEntries) {
@@ -195,16 +200,19 @@ export class Timeline {
       const after = nextScene.shapes.get(id) as Shape;
       return before.role !== after.role || before.color !== after.color;
     });
+    // `highlight` ids are shapes from *this or an earlier* step that should
+    // also read as "current" (in red) alongside whatever gets added — e.g.
+    // the QED step calling out the sides it just proved equal.
     const highlightIds = stepDef?.highlight ?? [];
 
     const groupHandles: { cancel(): void; finishInstantly(): void; done: Promise<void> }[] = [];
 
-    // The incoming step's shapes become the "current" set (drawn in the
-    // accent color under accentCurrentStep themes) as soon as they start
-    // drawing; the previous step's marks clear at the same moment. The
-    // attribute goes on before animateAdd so the circle sweep's temporary
-    // arc path can inherit it.
-    this.markCurrentStep([]);
+    // The incoming step's shapes plus anything it highlights become the
+    // "current" set (drawn in the accent color), so the newest construction
+    // — and whatever the step calls out — stands out. The attribute goes on
+    // before animateAdd so the circle sweep's temporary arc path can
+    // inherit it.
+    this.markCurrentStep([...new Set([...addedIds, ...highlightIds])]);
     for (const id of addedIds) {
       const shape = nextScene.shapes.get(id);
       if (!shape) continue;
@@ -223,14 +231,6 @@ export class Timeline {
       if (!entry || !before || !after) continue;
       const handle = animateRestyle(entry.node, before, after);
       groupHandles.push(handle);
-    }
-
-    for (const id of highlightIds) {
-      const entry = this.stageEntries.get(id);
-      const shape = nextScene.shapes.get(id);
-      if (!entry || !shape) continue;
-      const baseWidth = shape.role === 'construction' ? STROKE_WIDTH.construction : STROKE_WIDTH.normal;
-      groupHandles.push(animateHighlight(entry.node, baseWidth));
     }
 
     const combined = {
