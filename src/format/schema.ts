@@ -167,7 +167,10 @@ export interface ViewBox {
 export interface Proposition {
   readonly id: string;
   readonly title: string;
-  readonly view: ViewBox;
+  /** Optional explicit frame. When omitted (the default), the frame is
+   * computed from the *final* step's geometry plus padding, so the whole
+   * construction fits at every step (see kernel/bounds.ts). */
+  readonly view?: ViewBox;
   readonly given: Readonly<Record<string, Coords>>;
   readonly steps: readonly ProposedStep[];
 }

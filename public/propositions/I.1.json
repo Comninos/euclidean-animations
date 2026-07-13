@@ -1,7 +1,6 @@
 {
   "id": "I.1",
   "title": "On a given finite straight line to construct an equilateral triangle.",
-  "view": { "x": -2.2, "y": -1.6, "width": 4.4, "height": 3.7 },
   "given": { "A": [-1, 0], "B": [1, 0] },
   "steps": [
     {

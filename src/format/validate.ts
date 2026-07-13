@@ -92,9 +92,11 @@ export function validateProposition(prop: unknown): ValidationResult {
   if (typeof p.title !== 'string' || p.title.length === 0) {
     errors.push('missing or invalid "title" (expected non-empty string)');
   }
-  if (!p.view || typeof p.view !== 'object') {
-    errors.push('missing or invalid "view" (expected { x, y, width, height })');
-  } else {
+  // "view" is optional — when omitted, the frame is auto-computed from the
+  // final step's geometry (kernel/bounds.ts). Validate only if present.
+  if (p.view !== undefined && (typeof p.view !== 'object' || p.view === null)) {
+    errors.push('invalid "view" (expected { x, y, width, height } or omit for auto-framing)');
+  } else if (p.view) {
     for (const key of ['x', 'y', 'width', 'height'] as const) {
       if (typeof p.view[key] !== 'number' || !Number.isFinite(p.view[key])) {
         errors.push(`"view.${key}" must be a finite number`);

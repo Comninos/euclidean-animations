@@ -9,6 +9,8 @@
 import { validateProposition } from '../format/validate';
 import type { Proposition } from '../format/schema';
 import { Timeline } from './timeline';
+import { stateAt } from '../kernel/evaluate';
+import { computeViewBox } from '../kernel/bounds';
 import { createStageSvg } from '../render/svg';
 import { BYRNE_PALETTE, LABEL_FONT_FAMILY } from '../render/style';
 
@@ -31,6 +33,20 @@ const TEMPLATE = `
     width: 100%;
     aspect-ratio: var(--euclid-aspect);
     background: ${BYRNE_PALETTE.background};
+  }
+  /* fill mode (<euclid-player fill>): fit the host's given height instead
+     of deriving height from width via aspect-ratio. Used by full-bleed
+     iframe embeds, where aspect-driven sizing can push the caption and
+     controls below the iframe edge and clip them. */
+  :host([fill]) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  :host([fill]) .stage-wrap {
+    flex: 1;
+    min-height: 0;
+    aspect-ratio: auto;
   }
   svg.euclid-stage {
     width: 100%;
@@ -292,10 +308,13 @@ export class EuclidPlayerElement extends HTMLElement {
 
   private mount(prop: Proposition): void {
     this.stageWrap.innerHTML = '';
-    const svg = createStageSvg(prop.view);
+    // Frame the stage on the *final* scene's geometry unless the author
+    // pinned an explicit view, so no step ever draws outside the frame.
+    const view = prop.view ?? computeViewBox(stateAt(prop, prop.steps.length));
+    const svg = createStageSvg(view);
     this.stageWrap.appendChild(svg);
 
-    const aspect = prop.view.width / prop.view.height;
+    const aspect = view.width / view.height;
     this.style.setProperty('--euclid-aspect', String(aspect));
 
     if (prop.title) {

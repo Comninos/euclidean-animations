@@ -215,8 +215,11 @@ function labelAnchor(shape: Shape): Point {
       return shape.through;
     case 'circle':
       return { x: shape.center.x, y: shape.center.y + shape.radius };
-    case 'polygon':
-      return shape.points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
+    case 'polygon': {
+      const n = shape.points.length || 1;
+      const sum = shape.points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
+      return { x: sum.x / n, y: sum.y / n };
+    }
     case 'sector':
       return shape.center;
     case 'angleMark':

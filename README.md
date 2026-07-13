@@ -41,7 +41,6 @@ Add a file under `public/propositions/` (e.g. `I.5.json`). No rebuild of the Jav
 {
   "id": "I.1",
   "title": "On a given finite straight line to construct an equilateral triangle.",
-  "view": { "x": -2.2, "y": -1.6, "width": 4.4, "height": 3.2 },   // world-space viewBox, y-up
   "given": { "A": [-1, 0], "B": [1, 0] },                          // fixed starting points
   "steps": [
     { "text": "Caption shown while this step plays.",
@@ -54,6 +53,10 @@ Add a file under `public/propositions/` (e.g. `I.5.json`). No rebuild of the Jav
 ```
 
 Each entry in `steps` is one *logical beat* — one click of the step-forward button. Elements in `add` reference earlier elements by id.
+
+The frame is computed automatically from the **final** step's geometry (plus padding), so every circle and point fits at every step. Add an optional top-level `"view": { "x", "y", "width", "height" }` (world-space, y-up) only when you want to crop deliberately.
+
+The `<euclid-player>` element sizes itself from its width by default (gallery-style). Add the `fill` attribute — as `viewer.html` does — to make it fit a fixed-height container such as an iframe, so the caption and controls always stay visible.
 
 ### Operations
 
