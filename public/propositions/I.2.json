@@ -41,42 +41,32 @@
       ]
     },
     {
-      "id": "ray-DB",
-      "text": "Produce DB in a straight line beyond B, forming the ray DBG.",
+      "id": "produce-AE-BF",
+      "text": "Produce the straight lines AE, BF in a straight line with DA, DB.",
       "add": [
-        { "op": "ray", "id": "rayDB", "origin": "D", "through": "B", "color": "construction" }
-      ],
-      "set": [
-        { "targets": ["DB"], "role": "construction" }
+        { "op": "extend", "id": "E", "from": "D", "through": "A", "distance": 3.9, "label": "E" },
+        { "op": "extend", "id": "F", "from": "D", "through": "B", "distance": 3.9, "label": "F" },
+        { "op": "segment", "id": "AE", "from": "A", "to": "E" },
+        { "op": "segment", "id": "BF", "from": "B", "to": "F" }
       ]
     },
     {
-      "id": "circle-BC",
-      "text": "With centre B, and radius BC, describe the circle CGE, cutting DB produced at G.",
+      "id": "circle-CGH",
+      "text": "With centre B, and radius BC, describe the circle CGH, cutting BF at the point G.",
       "add": [
         { "op": "circle", "id": "cBC", "center": "B", "through": "C" },
-        { "op": "intersect", "id": "G", "of": ["cBC", "rayDB"], "pick": 1, "label": "G" }
+        { "op": "intersect", "id": "G", "of": ["cBC", "BF"], "pick": 1, "label": "G" }
       ]
     },
     {
-      "id": "ray-DA",
-      "text": "Produce DA in a straight line beyond A, forming the ray DAL.",
-      "add": [
-        { "op": "ray", "id": "rayDA", "origin": "D", "through": "A", "color": "construction" }
-      ],
-      "set": [
-        { "targets": ["DA"], "role": "construction" }
-      ]
-    },
-    {
-      "id": "circle-DG",
-      "text": "With centre D, and radius DG, describe the circle GLH, cutting DA produced at L.",
+      "id": "circle-GKL",
+      "text": "With centre D, and radius DG, describe the circle GKL, cutting AE at the point L.",
       "add": [
         { "op": "circle", "id": "cDG", "center": "D", "through": "G" },
-        { "op": "intersect", "id": "L", "of": ["cDG", "rayDA"], "pick": 1, "label": "L" }
+        { "op": "intersect", "id": "L", "of": ["cDG", "AE"], "pick": 1, "label": "L" }
       ],
       "set": [
-        { "targets": ["cBC", "rayDB"], "role": "construction" }
+        { "targets": ["cBC"], "role": "construction" }
       ]
     },
     {
@@ -86,7 +76,7 @@
         { "op": "segment", "id": "AL", "from": "A", "to": "L" }
       ],
       "set": [
-        { "targets": ["cDG", "rayDA"], "role": "construction" }
+        { "targets": ["cDG"], "role": "construction" }
       ]
     },
     {
