@@ -25,7 +25,7 @@ The site deploys to GitHub Pages on every push to `main` (see `.github/workflows
 
 ```html
 <iframe
-  src="https://<user>.github.io/euclidean-animations/viewer.html?prop=I.1"
+  src="https://comninos.github.io/euclidean-animations/viewer.html?prop=I.1"
   width="640" height="560"
   style="border: none;"
   loading="lazy"></iframe>
