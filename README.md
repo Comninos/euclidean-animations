@@ -65,6 +65,9 @@ To follow **Obsidian's own light/dark toggle live** (which is independent of the
     attributes: true,
     attributeFilter: ['class'],
   });
+  // Publish loads this script late — any iframe that announced itself
+  // before we attached the listener above needs this initial broadcast.
+  broadcast();
 })();
 ```
 
