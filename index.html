@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Byrne's Euclid, Animated</title>
+  <style>
+    :root {
+      --cream: #FAF3E3;
+      --black: #1B1B1B;
+      --red: #D13438;
+      --yellow: #F1C232;
+      --blue: #2E5FA3;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--cream);
+      color: var(--black);
+      font-family: Georgia, 'Times New Roman', serif;
+    }
+    header {
+      padding: 2.5rem 1.5rem 1.5rem;
+      text-align: center;
+      border-bottom: 3px solid var(--black);
+    }
+    header h1 {
+      margin: 0 0 0.4rem;
+      font-size: 2rem;
+      letter-spacing: 0.02em;
+    }
+    header p {
+      margin: 0;
+      font-style: italic;
+      opacity: 0.8;
+      max-width: 46em;
+      margin-inline: auto;
+    }
+    .swatches {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .swatch {
+      width: 1.1rem;
+      height: 1.1rem;
+      border-radius: 50%;
+      border: 1px solid rgba(27,27,27,0.3);
+    }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 2.5rem;
+    }
+    figure {
+      margin: 0;
+      background: #fff8ea;
+      border: 1px solid rgba(27,27,27,0.15);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(27,27,27,0.08);
+    }
+    figcaption {
+      padding: 0.9rem 1.1rem 0.4rem;
+      font-size: 1.05rem;
+    }
+    figcaption .id {
+      display: inline-block;
+      font-family: system-ui, sans-serif;
+      font-style: normal;
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      color: var(--red);
+      border: 1px solid var(--red);
+      border-radius: 3px;
+      padding: 0.05rem 0.4rem;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+    euclid-player {
+      display: block;
+      margin: 0 1.1rem 1.1rem;
+      width: calc(100% - 2.2rem);
+    }
+    footer {
+      text-align: center;
+      padding: 2rem 1rem 3rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.85rem;
+      opacity: 0.65;
+    }
+    code {
+      background: rgba(27,27,27,0.06);
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Byrne's Euclid, Animated</h1>
+    <p>
+      A modern, animated take on Oliver Byrne's 1847 edition of Euclid's Elements —
+      each proposition constructed step by step, in color, straight from a declarative
+      description of the construction.
+    </p>
+    <div class="swatches" aria-hidden="true">
+      <span class="swatch" style="background: var(--red)"></span>
+      <span class="swatch" style="background: var(--yellow)"></span>
+      <span class="swatch" style="background: var(--blue)"></span>
+      <span class="swatch" style="background: var(--black)"></span>
+    </div>
+  </header>
+  <main id="gallery">
+    <figure>
+      <figcaption><span class="id">I.1</span>On a given finite straight line to construct an equilateral triangle.</figcaption>
+      <euclid-player src="propositions/I.1.json"></euclid-player>
+    </figure>
+    <figure>
+      <figcaption><span class="id">I.2</span>From a given point to draw a straight line equal to a given straight line.</figcaption>
+      <euclid-player src="propositions/I.2.json"></euclid-player>
+    </figure>
+  </main>
+  <footer>
+    Embed any proposition standalone with <code>viewer.html?prop=I.1</code> in an <code>&lt;iframe&gt;</code>.
+  </footer>
+  <script type="module" src="src/main.ts"></script>
+</body>
+</html>

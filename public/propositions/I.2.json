@@ -1,0 +1,99 @@
+{
+  "id": "I.2",
+  "title": "From a given point to draw a straight line equal to a given straight line.",
+  "view": { "x": -3.1, "y": -2.9, "width": 5.4, "height": 4.6 },
+  "given": { "A": [-1.6, -0.8], "B": [0.2, -0.8], "C": [1.3, 0.5] },
+  "steps": [
+    {
+      "id": "given-points",
+      "text": "Let A be the given point, and BC the given straight line. It is required to draw from the point A a straight line equal to BC.",
+      "add": [
+        { "op": "point", "id": "A", "label": "A" },
+        { "op": "point", "id": "B", "label": "B" },
+        { "op": "point", "id": "C", "label": "C" },
+        { "op": "segment", "id": "BC", "from": "B", "to": "C", "color": "blue" }
+      ]
+    },
+    {
+      "id": "join-AB",
+      "text": "Join AB; and on AB construct the equilateral triangle DAB (Prop. I.1).",
+      "add": [
+        { "op": "segment", "id": "AB", "from": "A", "to": "B", "color": "black" }
+      ]
+    },
+    {
+      "id": "equilateral-circles",
+      "text": "With centre A, radius AB, describe a circle; with centre B, radius BA, describe another.",
+      "add": [
+        { "op": "circle", "id": "eqc1", "center": "A", "through": "B", "color": "red" },
+        { "op": "circle", "id": "eqc2", "center": "B", "through": "A", "color": "yellow" }
+      ]
+    },
+    {
+      "id": "find-D",
+      "text": "Let D be the point where the circles cut one another, and join DA, DB.",
+      "add": [
+        { "op": "intersect", "id": "D", "of": ["eqc1", "eqc2"], "pick": 0, "label": "D" },
+        { "op": "segment", "id": "DA", "from": "D", "to": "A", "color": "red" },
+        { "op": "segment", "id": "DB", "from": "D", "to": "B", "color": "yellow" }
+      ],
+      "set": [
+        { "targets": ["eqc1", "eqc2"], "role": "construction" }
+      ]
+    },
+    {
+      "id": "ray-DB",
+      "text": "Produce DB in a straight line beyond B, forming the ray DBG.",
+      "add": [
+        { "op": "ray", "id": "rayDB", "origin": "D", "through": "B", "color": "construction" }
+      ],
+      "set": [
+        { "targets": ["DB"], "role": "construction" }
+      ]
+    },
+    {
+      "id": "circle-BC",
+      "text": "With centre B, and radius BC, describe the circle CGE, cutting DB produced at G.",
+      "add": [
+        { "op": "circle", "id": "cBC", "center": "B", "through": "C", "color": "blue" },
+        { "op": "intersect", "id": "G", "of": ["cBC", "rayDB"], "pick": 1, "label": "G" }
+      ]
+    },
+    {
+      "id": "ray-DA",
+      "text": "Produce DA in a straight line beyond A, forming the ray DAL.",
+      "add": [
+        { "op": "ray", "id": "rayDA", "origin": "D", "through": "A", "color": "construction" }
+      ],
+      "set": [
+        { "targets": ["DA"], "role": "construction" }
+      ]
+    },
+    {
+      "id": "circle-DG",
+      "text": "With centre D, and radius DG, describe the circle GLH, cutting DA produced at L.",
+      "add": [
+        { "op": "circle", "id": "cDG", "center": "D", "through": "G", "color": "red" },
+        { "op": "intersect", "id": "L", "of": ["cDG", "rayDA"], "pick": 1, "label": "L" }
+      ],
+      "set": [
+        { "targets": ["cBC", "rayDB"], "role": "construction" }
+      ]
+    },
+    {
+      "id": "draw-AL",
+      "text": "Join AL. Then AL shall be equal to BC.",
+      "add": [
+        { "op": "segment", "id": "AL", "from": "A", "to": "L", "color": "black" }
+      ],
+      "set": [
+        { "targets": ["cDG", "rayDA"], "role": "construction" }
+      ]
+    },
+    {
+      "id": "qed",
+      "text": "For DA = DB and DL = DG, and DB, DG were each reduced by DA, DB respectively (equals from equals); therefore the remainder AL = the remainder BG = BC. Wherefore AL is equal to BC, as was required.",
+      "highlight": ["AL", "BC"]
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Euclid Viewer</title>
+  <style>
+    :root {
+      --cream: #FAF3E3;
+      --black: #1B1B1B;
+      --red: #D13438;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: var(--cream);
+    }
+    body {
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+      font-family: Georgia, 'Times New Roman', serif;
+      color: var(--black);
+    }
+    euclid-player {
+      flex: 1;
+      width: 100%;
+      border: none;
+      border-radius: 0;
+    }
+    euclid-player[hidden] { display: none; }
+    .missing {
+      margin: auto;
+      padding: 2rem;
+      text-align: center;
+      font-style: italic;
+    }
+    .missing code {
+      font-family: system-ui, sans-serif;
+      font-style: normal;
+      background: rgba(27,27,27,0.06);
+      padding: 0.1em 0.4em;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <euclid-player id="player" hidden></euclid-player>
+  <div id="missing" class="missing" hidden>
+    <p>Specify a proposition with <code>?prop=I.1</code> in the URL.</p>
+    <p>
+      Try <a href="viewer.html?prop=I.1">Proposition I.1</a> ·
+      <a href="viewer.html?prop=I.2">Proposition I.2</a> ·
+      or browse the <a href="index.html">gallery</a>.
+    </p>
+  </div>
+  <script>
+    // Classic script: runs during parse, before the module below, so the
+    // element already carries its src when the custom element upgrades.
+    (function () {
+      var prop = new URLSearchParams(window.location.search).get('prop');
+      var player = document.getElementById('player');
+      if (prop && /^[A-Za-z0-9._-]+$/.test(prop)) {
+        player.setAttribute('src', 'propositions/' + prop + '.json');
+        player.hidden = false;
+        document.title = 'Euclid ' + prop;
+      } else {
+        document.getElementById('missing').hidden = false;
+      }
+    })();
+  </script>
+  <script type="module" src="src/main.ts"></script>
+</body>
+</html>

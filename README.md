@@ -1,0 +1,86 @@
+# Euclidean Animations
+
+Animated Euclidean constructions in the spirit of [Oliver Byrne's 1847 edition of Euclid's *Elements*](https://www.c82.net/euclid/) — each proposition rendered as a step-by-step, colored geometric construction that plays in the browser and can be embedded anywhere with an `<iframe>`.
+
+- **Geometry kernel** — exact construction math (intersections, distances, extensions), no rendering concerns.
+- **Declarative propositions** — each proposition is a single JSON file describing construction steps; no code required to add one.
+- **SVG renderer** — crisp, scalable Byrne-style graphics with compass-sweep and draw-on animations.
+- **`<euclid-player>` web component** — play, pause, step forward/backward, restart. Stepping is *logical*: one step = one beat of the construction, not a unit of time.
+
+## Quick start
+
+```sh
+npm install
+npm run dev        # gallery at http://localhost:5173
+npm test           # geometry kernel tests
+npm run build      # static site in dist/
+```
+
+- `index.html` — gallery of all propositions.
+- `viewer.html?prop=I.1` — a single proposition, full-bleed. This is the iframe target.
+
+## Embedding (Obsidian Publish or any web page)
+
+The site deploys to GitHub Pages on every push to `main` (see `.github/workflows/deploy.yml`). Embed a proposition with:
+
+```html
+<iframe
+  src="https://<user>.github.io/euclidean-animations/viewer.html?prop=I.1"
+  width="640" height="560"
+  style="border: none;"
+  loading="lazy"></iframe>
+```
+
+In Obsidian, put the `<iframe>` tag directly in a note; Obsidian Publish renders it as-is.
+
+## Authoring a proposition
+
+Add a file under `public/propositions/` (e.g. `I.5.json`). No rebuild of the JavaScript is needed — proposition JSON is fetched at runtime.
+
+```jsonc
+{
+  "id": "I.1",
+  "title": "On a given finite straight line to construct an equilateral triangle.",
+  "view": { "x": -2.2, "y": -1.6, "width": 4.4, "height": 3.2 },   // world-space viewBox, y-up
+  "given": { "A": [-1, 0], "B": [1, 0] },                          // fixed starting points
+  "steps": [
+    { "text": "Caption shown while this step plays.",
+      "add": [ /* elements constructed in this step */ ],
+      "set": [ /* restyle earlier elements, e.g. demote to construction lines */ ],
+      "highlight": [ /* ids to pulse */ ]
+    }
+  ]
+}
+```
+
+Each entry in `steps` is one *logical beat* — one click of the step-forward button. Elements in `add` reference earlier elements by id.
+
+### Operations
+
+| op | fields | result |
+|----|--------|--------|
+| `point` | `at: [x, y]` or reference | a labeled point |
+| `segment` | `from`, `to` | segment between two points |
+| `line` / `ray` | `from`, `to` | infinite line / ray through two points |
+| `circle` | `center`, `through` | compass circle |
+| `intersect` | `of: [a, b]`, `pick` | intersection point of two elements |
+| `polygon` | `of: [p1, p2, ...]` | filled region |
+
+### The `pick` convention
+
+Circle–circle and line–circle intersections have two solutions. They are ordered deterministically: for circle–circle, `pick: 0` is the intersection on the **left** of the direction vector from the first circle's center to the second's (counter-clockwise side); `pick: 1` is the right. For line–circle, solutions are ordered along the line's direction. This is locked in by unit tests in `tests/ops.test.ts`.
+
+### Styling
+
+Colors are named, mapped through the Byrne palette in `src/render/style.ts`: `red`, `yellow`, `blue`, `black`. Setting `role: "construction"` on an element (via `set`) demotes it to a thin, dashed, faded line — used to de-emphasize scaffolding once the result is drawn.
+
+## Architecture
+
+```
+src/kernel/    pure geometry math + step evaluator (no DOM)
+src/format/    JSON schema types + validation
+src/render/    Byrne styles, static SVG rendering, rAF tween animations
+src/player/    step-indexed timeline + <euclid-player> custom element
+```
+
+The timeline is **step-indexed, not clock-indexed**: the scene at step *k* is a pure function of the steps, so stepping backward or seeking renders instantly and can never desync from a clock.
