@@ -110,6 +110,8 @@ With the `euclid-size` listener from the publish.js snippet above, the iframe's 
 
 ## Authoring a proposition
 
+See [`docs/AUTHORING.md`](docs/AUTHORING.md) for the complete format reference (every op, every failure mode, a worked example) — the summary below covers just the basics.
+
 Add a file under `public/propositions/` (e.g. `I.5.json`). No rebuild of the JavaScript is needed — proposition JSON is fetched at runtime.
 
 ```jsonc
@@ -139,9 +141,11 @@ The `<euclid-player>` element sizes itself from its width by default (gallery-st
 |----|--------|--------|
 | `point` | `at: [x, y]` or reference | a labeled point |
 | `segment` | `from`, `to` | segment between two points |
-| `line` / `ray` | `from`, `to` | infinite line / ray through two points |
+| `line` | `a`, `b` | line through two points (infinite for intersections, drawn a–b) |
+| `ray` | `origin`, `through` | ray (semi-infinite for intersections, drawn origin–through) |
 | `circle` | `center`, `through` | compass circle |
 | `intersect` | `of: [a, b]`, `pick` | intersection point of two elements |
+| `extend` | `from`, `through`, `distance` | point at a distance along a direction (for producing lines) |
 | `polygon` | `of: [p1, p2, ...]` | outline (stroke-only) polygon |
 
 ### The `pick` convention

@@ -1,0 +1,78 @@
+{
+  "id": "I.9",
+  "title": "To bisect a given rectilineal angle.",
+  "given": {
+    "A": [0, 0],
+    "B": [2.4, 0],
+    "C": [0.8208483439816051, 2.25526228988618]
+  },
+  "steps": [
+    {
+      "id": "given-angle",
+      "text": "Let BAC be the given rectilineal angle. It is required to bisect it.",
+      "add": [
+        { "op": "point", "id": "A", "label": "A" },
+        { "op": "point", "id": "B", "label": "B" },
+        { "op": "point", "id": "C", "label": "C" },
+        { "op": "ray", "id": "AB", "origin": "A", "through": "B" },
+        { "op": "ray", "id": "AC", "origin": "A", "through": "C" }
+      ]
+    },
+    {
+      "id": "take-D",
+      "text": "Take an arbitrary point D on AB.",
+      "add": [
+        { "op": "point", "id": "D", "at": [1.4, 0], "label": "D" }
+      ]
+    },
+    {
+      "id": "cut-AE",
+      "text": "Cut off AE from AC equal to AD (Prop. I.3).",
+      "add": [
+        { "op": "pointAtDistance", "id": "E", "origin": "A", "through": "C", "distance": 1.4, "label": "E" }
+      ]
+    },
+    {
+      "id": "join-DE",
+      "text": "Join DE.",
+      "add": [
+        { "op": "segment", "id": "DE", "from": "D", "to": "E" }
+      ]
+    },
+    {
+      "id": "equilateral-circles",
+      "text": "On DE construct the equilateral triangle DEF (Prop. I.1): with centre D, radius DE, describe a circle; with centre E, radius ED, describe another.",
+      "add": [
+        { "op": "circle", "id": "cD", "center": "D", "through": "E" },
+        { "op": "circle", "id": "cE", "center": "E", "through": "D" }
+      ]
+    },
+    {
+      "id": "find-F",
+      "text": "Let F be the point where the circles cut one another, on the side remote from A, and join AF.",
+      "add": [
+        { "op": "intersect", "id": "F", "of": ["cD", "cE"], "pick": 1, "label": "F" },
+        { "op": "segment", "id": "AF", "from": "A", "to": "F" }
+      ],
+      "set": [
+        { "targets": ["cD", "cE"], "role": "hidden" }
+      ]
+    },
+    {
+      "id": "draw-DF-EF",
+      "text": "Join DF and EF.",
+      "add": [
+        { "op": "segment", "id": "DF", "from": "D", "to": "F" },
+        { "op": "segment", "id": "EF", "from": "E", "to": "F" }
+      ],
+      "set": [
+        { "targets": ["DF", "EF"], "role": "construction" }
+      ]
+    },
+    {
+      "id": "qed",
+      "text": "For AD = AE, DF = EF, and AF is common; therefore the angle DAF equals the angle EAF (Prop. I.8). Wherefore the angle BAC is bisected by the straight line AF, as was required.",
+      "highlight": ["AF"]
+    }
+  ]
+}
