@@ -9,8 +9,7 @@
 import { validateProposition } from '../format/validate';
 import type { Proposition } from '../format/schema';
 import { Timeline } from './timeline';
-import { stateAt } from '../kernel/evaluate';
-import { computeViewBox } from '../kernel/bounds';
+import { computePropositionViewBox } from '../kernel/bounds';
 import { createStageSvg } from '../render/svg';
 import { DARK_PALETTE, LABEL_FONT_FAMILY, LIGHT_PALETTE, paletteCssDeclarations } from '../render/style';
 
@@ -349,9 +348,10 @@ export class EuclidPlayerElement extends HTMLElement {
 
   private mount(prop: Proposition): void {
     this.stageWrap.innerHTML = '';
-    // Frame the stage on the *final* scene's geometry unless the author
-    // pinned an explicit view, so no step ever draws outside the frame.
-    const view = prop.view ?? computeViewBox(stateAt(prop, prop.steps.length));
+    // Frame the stage on the union of every step's visible geometry unless
+    // the author pinned an explicit view, so no step ever draws outside the
+    // frame — including scaffolding that a later step hides.
+    const view = prop.view ?? computePropositionViewBox(prop);
     const svg = createStageSvg(view);
     this.stageWrap.appendChild(svg);
 

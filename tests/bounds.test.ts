@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeViewBox } from '../src/kernel/bounds';
+import { computePropositionViewBox, computeViewBox } from '../src/kernel/bounds';
 import { stateAt } from '../src/kernel/evaluate';
 import type { Proposition } from '../src/format/schema';
 
@@ -50,7 +50,7 @@ describe('computeViewBox', () => {
     expect(view.height).toBeGreaterThan(0);
   });
 
-  it('excludes hidden scaffolding from the frame', () => {
+  it('excludes hidden shapes from a single-scene frame', () => {
     const withHiddenCircles: Proposition = {
       ...I1_LIKE,
       steps: [
@@ -64,5 +64,23 @@ describe('computeViewBox', () => {
     expect(view.x).toBeGreaterThan(-2);
     expect(view.x + view.width).toBeLessThan(2);
     expect(view.y + view.height).toBeLessThan(2.5);
+  });
+
+  it('proposition frame covers scaffolding while it is visible, even if later hidden', () => {
+    const withHiddenCircles: Proposition = {
+      ...I1_LIKE,
+      steps: [
+        ...I1_LIKE.steps,
+        { set: [{ targets: ['c1', 'c2'], role: 'hidden' }] },
+      ],
+    };
+    // The circles (spanning x in [-3, 3], y in [-2, 2]) are visible during
+    // the middle steps, so the whole-proposition frame must contain them —
+    // otherwise they would be clipped exactly while they are on stage.
+    const view = computePropositionViewBox(withHiddenCircles);
+    expect(view.x).toBeLessThan(-3);
+    expect(view.x + view.width).toBeGreaterThan(3);
+    expect(view.y).toBeLessThan(-2);
+    expect(view.y + view.height).toBeGreaterThan(2);
   });
 });

@@ -42,14 +42,18 @@ BCD" is one step; "from the point C draw CA and CB" is one step; the closing
 
 Coordinates in `given` and in any `at: [x, y]` are an **abstract, unitless,
 y-up plane** — not pixels, not an SVG viewBox you pick yourself. Authors
-never choose a viewBox. Instead, the frame is computed automatically from
-the geometry of the **final** step (every shape that exists once the whole
-construction is done), plus a small padding margin — see
-`src/kernel/bounds.ts`. Because every earlier step's geometry is a subset of
-(or coincides with) the final scene's geometry in a well-formed proposition,
-this one frame safely contains every step along the way. You can override it
-with a top-level `"view"` object when you deliberately want a tighter or
-off-center crop, but this is the exception, not the default.
+never choose a viewBox. Instead, the frame is computed automatically as the
+union of **every step's visible geometry**, plus a small padding margin —
+see `computePropositionViewBox` in `src/kernel/bounds.ts`. This guarantees
+nothing is ever clipped at any step, including scaffolding that a later
+step sets to `role: "hidden"`: it counts toward the frame for the steps in
+which it is visible. The design consequence for authors: **big scaffolding
+costs figure size even if you hide it later**, because the frame must
+accommodate it while it is on stage — prefer sub-constructions whose
+geometry stays within (or near) the extent of the final figure. You can
+override the computed frame with a top-level `"view"` object when you
+deliberately want a tighter or off-center crop, but this is the exception,
+not the default.
 
 ## 2. File anatomy
 
@@ -460,10 +464,13 @@ Effects of `role`:
   scaffolding" look for sub-constructions that have served their purpose
   but you still want faintly visible for reference (e.g. the compass
   circles in I.1's closing steps).
-- `"hidden"` — opacity 0 (fully invisible), and **excluded from the
-  auto-computed frame** (`computeViewBox` in `src/kernel/bounds.ts` skips
-  any shape whose `role !== 'hidden'`... i.e. explicitly skips shapes that
-  *are* hidden). The shape's id stays fully valid to reference afterward
+- `"hidden"` — opacity 0 (fully invisible). Note on framing: the
+  proposition frame is the union of every step's *visible* geometry
+  (`computePropositionViewBox` in `src/kernel/bounds.ts`), so a shape
+  contributes to the frame for the steps in which it is visible and stops
+  contributing only for steps where it is hidden — hiding declutters the
+  figure but does not shrink the frame retroactively (the scaffolding must
+  fit on stage while it is drawn). The shape's id stays fully valid to reference afterward
   (e.g. you can still `intersect` against a hidden circle, or `set` it back
   to `"normal"` later — un-hiding crossfades it back in). This is the
   mechanism I.2 uses to make the two equilateral-triangle circles from its
@@ -655,8 +662,9 @@ the wrong side, the intersection point between the rays. The "right of
 from `A` — the point on the far side from `A`, which is the `F` Euclid's
 construction needs. Computing the angle of `AF` from the x-axis gives
 exactly `35.0000...°` — half of 70°, confirming both the arithmetic and the
-`pick: 1` choice are correct. The final scene's bounding box is about
-`2.4 × 2.26` plane units, comfortably compact per section 5.
+`pick: 1` choice are correct. Note the frame is sized by the construction
+at its *largest visible* moment — here the two equilateral circles on DE,
+before they are hidden — not by the compact final figure alone.
 
 ```json
 {
@@ -803,7 +811,7 @@ Every op also accepts optional `id` (required in practice — see section
 |---|---|---|---|---|
 | `normal` | full width (0.024) | solid | 100% | yes |
 | `construction` | thin (0.013) | dashed (`0.09 0.07`) | 45% | yes |
-| `hidden` | n/a (opacity 0) | n/a | 0% | **no** — excluded from `computeViewBox` |
+| `hidden` | n/a (opacity 0) | n/a | 0% | only for steps where it is still visible (frame = union over all steps) |
 
 ### Colors (`ColorName`)
 
