@@ -125,10 +125,30 @@ export class Timeline {
       if (node) this.stageEntries.set(id, { node, label });
     }
     this.container.appendChild(g);
+    this.markCurrentStep(this.addedIdsForStep(k));
     this.step = k;
     this.playState = 'paused';
     this.events.onStepChange?.(this.step, this.totalSteps);
     this.events.onPlayStateChange?.(this.playState);
+  }
+
+  /** Ids of the shapes the k-th step (1-based) adds; empty at step 0. */
+  private addedIdsForStep(k: number): readonly string[] {
+    const step = k > 0 ? this.prop.steps[k - 1] : undefined;
+    return step?.add?.map((op) => op.id) ?? [];
+  }
+
+  /** Tag the given shapes (and their labels) as the "current" step's
+   * geometry via a data-current attribute, clearing it everywhere else.
+   * Themes with accentCurrentStep style [data-current] in the accent color
+   * so the newest construction stands out. */
+  private markCurrentStep(ids: readonly string[]): void {
+    const current = new Set(ids);
+    for (const [id, entry] of this.stageEntries) {
+      const on = current.has(id);
+      entry.node.toggleAttribute('data-current', on);
+      entry.label?.toggleAttribute('data-current', on);
+    }
   }
 
   /** Render `stateAt(k)` instantly (no animation), cancelling any running
@@ -179,10 +199,18 @@ export class Timeline {
 
     const groupHandles: { cancel(): void; finishInstantly(): void; done: Promise<void> }[] = [];
 
+    // The incoming step's shapes become the "current" set (drawn in the
+    // accent color under accentCurrentStep themes) as soon as they start
+    // drawing; the previous step's marks clear at the same moment. The
+    // attribute goes on before animateAdd so the circle sweep's temporary
+    // arc path can inherit it.
+    this.markCurrentStep([]);
     for (const id of addedIds) {
       const shape = nextScene.shapes.get(id);
       if (!shape) continue;
       const rendered: RenderedShape = renderShape(shape);
+      rendered.node.setAttribute('data-current', '');
+      rendered.label?.setAttribute('data-current', '');
       const handle = animateAdd(this.container, shape, rendered);
       this.stageEntries.set(id, { node: rendered.node, label: rendered.label });
       groupHandles.push(handle);

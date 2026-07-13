@@ -35,18 +35,31 @@ In Obsidian, put the `<iframe>` tag directly in a note; Obsidian Publish renders
 
 ### Theming embeds
 
-The viewer supports a dark Byrne palette and exact background matching:
+Themes live in one registry in `src/render/style.ts` (`THEMES`) — add an entry there and it's immediately usable everywhere. Built-in:
 
-- `viewer.html?prop=I.1&theme=dark` — dark theme (dark ground, paper-white ink).
-- `...&bg=%23262626` — set the exact background color (URL-encoded hex) so the embed blends into your page.
+| name | look |
+|------|------|
+| *(default)* | Byrne light: colored construction on cream |
+| `dark` | Byrne dark: same hues, brightened, on a dark ground |
+| `mono` | Minimal: hairline ink lines on paper, no fills, **current step in red** |
+| `mono-dark` | The same, light ink on near-black |
+
+A theme is a palette plus optional behaviors: `accentCurrentStep` renders the most recent step's geometry in the accent color, and `minimal` switches to hairline strokes, unfilled polygons, smaller points, and calm fade entrances (no pops or pulses; lines still draw on).
+
+Select a theme per embed:
+
+- `viewer.html?prop=I.1&theme=mono-dark` — any registered theme name.
+- `...&bg=%23262626` — override the background with an exact color (URL-encoded hex) so the embed blends into your page.
 
 To follow **Obsidian's own light/dark toggle live** (which is independent of the OS/browser preference), add this to your Obsidian Publish `publish.js`. It answers each embed when it loads and re-broadcasts whenever the reader flips the theme:
 
 ```js
 (function () {
   var FRAMES = 'iframe[src*="euclidean-animations/viewer.html"]';
+  var LIGHT_THEME = 'light'; // e.g. 'mono' for the minimal look
+  var DARK_THEME = 'dark';   // e.g. 'mono-dark'
   function theme() {
-    return document.body.classList.contains('theme-dark') ? 'dark' : 'light';
+    return document.body.classList.contains('theme-dark') ? DARK_THEME : LIGHT_THEME;
   }
   function send(frame) {
     if (frame.contentWindow) {

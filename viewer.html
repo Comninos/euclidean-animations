@@ -73,11 +73,27 @@
         document.getElementById('missing').hidden = false;
       }
 
+      // Keep the page (letterbox/missing-page) in step with the player's
+      // theme. The variables only resolve once the custom element has
+      // upgraded and installed its stylesheet, hence the whenDefined hook.
+      function syncPageColors() {
+        var style = getComputedStyle(player);
+        var bg = style.getPropertyValue('--euclid-background').trim();
+        var ink = style.getPropertyValue('--euclid-black').trim();
+        if (bg) document.body.style.background = bg;
+        if (ink) document.body.style.color = ink;
+      }
+      customElements.whenDefined('euclid-player').then(syncPageColors);
+
       function applyTheme(theme) {
-        var dark = theme === 'dark';
-        if (dark) player.setAttribute('theme', 'dark');
-        else player.removeAttribute('theme');
-        document.body.classList.toggle('dark', dark);
+        // Any theme name registered in src/render/style.ts (dark, mono,
+        // mono-dark, ...); 'light' or anything invalid means the default.
+        if (typeof theme === 'string' && theme !== 'light' && /^[a-z][a-z0-9-]*$/i.test(theme)) {
+          player.setAttribute('theme', theme);
+        } else {
+          player.removeAttribute('theme');
+        }
+        syncPageColors();
       }
 
       // Exact page-color match: ?bg=%23202020 (any CSS hex; # optional).
@@ -100,7 +116,7 @@
       window.addEventListener('message', function (e) {
         var d = e.data;
         if (!d || d.type !== 'euclid-theme') return;
-        if (d.theme === 'dark' || d.theme === 'light') applyTheme(d.theme);
+        if (typeof d.theme === 'string') applyTheme(d.theme);
         if (typeof d.bg === 'string') applyBg(d.bg);
       });
 

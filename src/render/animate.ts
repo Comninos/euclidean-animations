@@ -191,6 +191,30 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+/** Whether the active theme requests minimal animation (--euclid-anim:
+ * minimal on the player host — see the theme registry in style.ts): calm
+ * fades instead of pops, no highlight pulse. Checked live per tween so a
+ * theme switch mid-session applies to the next animation. */
+function isMinimalAnim(node: Element): boolean {
+  return getComputedStyle(node).getPropertyValue('--euclid-anim').trim() === 'minimal';
+}
+
+/** A simple opacity fade-in on the node's inline style (inline style so it
+ * layers over any theme CSS), used by minimal themes in place of shape
+ * pops. Clears itself once done. */
+function fadeInTween(node: SVGElement, durationMs: number): TweenHandle {
+  node.style.opacity = '0';
+  return runTween({
+    durationMs,
+    onFrame: (t) => {
+      node.style.opacity = String(t);
+    },
+    onDone: () => {
+      node.style.opacity = '';
+    },
+  });
+}
+
 /** Compute the SVG path/stroke length so stroke-dasharray draw-on can be
  * normalized to [0,1] via pathLength="1". */
 function setupDrawOn(node: SVGGeometryElement): void {
@@ -213,11 +237,16 @@ export function animateAdd(
 ): TweenGroupHandle {
   container.appendChild(rendered.node);
   const style = styleForShape(shape);
+  const minimal = isMinimalAnim(container);
   const handles: TweenHandle[] = [];
 
   switch (shape.kind) {
     case 'point': {
       const circle = rendered.node as SVGCircleElement;
+      if (minimal) {
+        handles.push(fadeInTween(circle, POINT_POP_DURATION_MS));
+        break;
+      }
       circle.setAttribute('r', '0');
       handles.push(
         runTween({
@@ -275,6 +304,11 @@ export function animateAdd(
       arcPath.setAttribute('stroke-linecap', style.lineCap);
       if (style.strokeOpacity !== 1) arcPath.setAttribute('stroke-opacity', String(style.strokeOpacity));
       arcPath.setAttribute('data-id', `${shape.id}__sweep`);
+      arcPath.setAttribute('data-kind', 'circle');
+      arcPath.setAttribute('data-role', shape.role);
+      // Inherit the current-step mark so accentCurrentStep themes draw the
+      // sweeping compass arc in the accent color, not just the final circle.
+      if (rendered.node.hasAttribute('data-current')) arcPath.setAttribute('data-current', '');
       setupDrawOn(arcPath);
       container.replaceChild(arcPath, rendered.node);
 
@@ -344,17 +378,21 @@ export function animateAdd(
   if (rendered.label) {
     const label = rendered.label;
     container.appendChild(label);
-    label.style.opacity = '0';
-    const baseY = Number(label.getAttribute('y'));
-    handles.push(
-      runTween({
-        durationMs: LABEL_FADE_DURATION_MS,
-        onFrame: (t) => {
-          label.style.opacity = String(t);
-          label.setAttribute('y', String(baseY + (1 - t) * 0.08));
-        },
-      })
-    );
+    if (minimal) {
+      handles.push(fadeInTween(label, LABEL_FADE_DURATION_MS));
+    } else {
+      label.style.opacity = '0';
+      const baseY = Number(label.getAttribute('y'));
+      handles.push(
+        runTween({
+          durationMs: LABEL_FADE_DURATION_MS,
+          onFrame: (t) => {
+            label.style.opacity = String(t);
+            label.setAttribute('y', String(baseY + (1 - t) * 0.08));
+          },
+        })
+      );
+    }
   }
 
   return runTweenGroup(handles);
@@ -417,6 +455,11 @@ export function animateRestyle(node: SVGElement, from: Shape, to: Shape): TweenG
 // ---------------------------------------------------------------------------
 
 export function animateHighlight(node: SVGElement, baseStrokeWidth: number): TweenGroupHandle {
+  // Minimal themes forgo the width pulse — the current-step accent color
+  // already carries the emphasis, and pulsing fights the hairline look.
+  if (isMinimalAnim(node)) {
+    return runTweenGroup([runTween({ durationMs: 0, onFrame: () => {} })]);
+  }
   const peakWidth = baseStrokeWidth * 2.2;
   const handle = runTween({
     durationMs: HIGHLIGHT_DURATION_MS,

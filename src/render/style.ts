@@ -29,12 +29,75 @@ export const BYRNE_PALETTE_DARK: ByrnePalette = {
   construction: '#98917F',
 };
 
-/** CSS declarations mapping a palette onto the --euclid-* custom
+export interface Theme {
+  readonly palette: ByrnePalette;
+  /** Accent used by player chrome (active step dot, errors) and — when
+   * `accentCurrentStep` is set — by the current step's geometry. */
+  readonly accent: string;
+  /** When true, elements added by the most recent step render in `accent`
+   * (overriding their authored color), so the newest construction always
+   * stands out. Elements revert as the construction moves on. Pair with a
+   * monochrome palette for a minimal two-tone look. */
+  readonly accentCurrentStep?: boolean;
+  /** Minimal presentation: thin hairline strokes, no polygon/sector fills,
+   * smaller points, and calm entrances (fade instead of pop, no highlight
+   * pulse) — plain "platonic" line work. Lines still draw on. */
+  readonly minimal?: boolean;
+}
+
+// ── Theme registry ────────────────────────────────────────────────────────
+// Add a theme here and it is immediately selectable via
+// <euclid-player theme="name">, viewer.html?theme=name, and the
+// postMessage relay. The default (no attribute) is Byrne light.
+const FLEXOKI_ACCENT = 'rgb(192, 62, 53)';
+
+export const THEMES: Readonly<Record<string, Theme>> = {
+  dark: {
+    palette: BYRNE_PALETTE_DARK,
+    accent: BYRNE_PALETTE_DARK.red,
+  },
+  // Minimal two-tone themes: ink and grey geometry on paper/black grounds,
+  // with the current step picked out in red.
+  mono: {
+    palette: {
+      background: '#FFFCF0',
+      black: '#0D0C0C',
+      red: '#0D0C0C',
+      yellow: '#0D0C0C',
+      blue: '#0D0C0C',
+      construction: '#B7B5AC',
+    },
+    accent: FLEXOKI_ACCENT,
+    accentCurrentStep: true,
+    minimal: true,
+  },
+  'mono-dark': {
+    palette: {
+      background: '#0D0C0C',
+      black: '#CECDC3',
+      red: '#CECDC3',
+      yellow: '#CECDC3',
+      blue: '#CECDC3',
+      construction: '#575653',
+    },
+    accent: FLEXOKI_ACCENT,
+    accentCurrentStep: true,
+    minimal: true,
+  },
+};
+
+export const DEFAULT_THEME: Theme = {
+  palette: BYRNE_PALETTE,
+  accent: BYRNE_PALETTE.red,
+};
+
+/** CSS declarations mapping a theme onto the --euclid-* custom
  * properties every rendered shape and the player chrome consume. */
-export function paletteCssDeclarations(palette: ByrnePalette): string {
-  return Object.entries(palette)
-    .map(([name, value]) => `--euclid-${name}: ${value};`)
-    .join('\n    ');
+export function themeCssDeclarations(theme: Theme): string {
+  return [
+    ...Object.entries(theme.palette).map(([name, value]) => `--euclid-${name}: ${value};`),
+    `--euclid-accent: ${theme.accent};`,
+  ].join('\n    ');
 }
 
 /** Colors resolve to CSS custom properties (declared on the player's
@@ -49,6 +112,13 @@ export function resolveFillOrStroke(color: ColorName): string {
 export const STROKE_WIDTH = {
   normal: 0.045,
   construction: 0.022,
+} as const;
+
+/** Hairline widths used by `minimal` themes (applied via theme CSS). */
+export const STROKE_WIDTH_MINIMAL = {
+  normal: 0.024,
+  construction: 0.013,
+  pointRadius: 0.035,
 } as const;
 
 export const POINT_RADIUS = 0.05;
