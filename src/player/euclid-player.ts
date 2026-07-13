@@ -12,27 +12,35 @@ import { Timeline } from './timeline';
 import { stateAt } from '../kernel/evaluate';
 import { computeViewBox } from '../kernel/bounds';
 import { createStageSvg } from '../render/svg';
-import { BYRNE_PALETTE, LABEL_FONT_FAMILY } from '../render/style';
+import { BYRNE_PALETTE, BYRNE_PALETTE_DARK, LABEL_FONT_FAMILY, paletteCssDeclarations } from '../render/style';
 
 const TEMPLATE = `
 <style>
   :host {
+    ${paletteCssDeclarations(BYRNE_PALETTE)}
+    /* alpha tones derived from the ink color, for chrome (borders etc.) */
+    --euclid-line: color-mix(in srgb, var(--euclid-black) 14%, transparent);
+    --euclid-line-strong: color-mix(in srgb, var(--euclid-black) 38%, transparent);
+    --euclid-hover: color-mix(in srgb, var(--euclid-black) 8%, transparent);
     display: block;
     box-sizing: border-box;
     font-family: ${LABEL_FONT_FAMILY};
-    background: ${BYRNE_PALETTE.background};
-    color: ${BYRNE_PALETTE.black};
-    border: 1px solid rgba(27, 27, 27, 0.15);
+    background: var(--euclid-background);
+    color: var(--euclid-black);
+    border: 1px solid var(--euclid-line);
     border-radius: 4px;
     overflow: hidden;
     --euclid-aspect: 1.375; /* width / height, replaced once the proposition loads */
+  }
+  :host([theme="dark"]) {
+    ${paletteCssDeclarations(BYRNE_PALETTE_DARK)}
   }
   * { box-sizing: border-box; }
   .stage-wrap {
     position: relative;
     width: 100%;
     aspect-ratio: var(--euclid-aspect);
-    background: ${BYRNE_PALETTE.background};
+    background: var(--euclid-background);
   }
   /* fill mode (<euclid-player fill>): fit the host's given height instead
      of deriving height from width via aspect-ratio. Used by full-bleed
@@ -54,7 +62,7 @@ const TEMPLATE = `
     display: block;
   }
   rect.euclid-background {
-    fill: ${BYRNE_PALETTE.background};
+    fill: var(--euclid-background);
   }
   text.euclid-label {
     user-select: none;
@@ -66,22 +74,22 @@ const TEMPLATE = `
     font-style: italic;
     font-size: 0.95rem;
     line-height: 1.35;
-    border-top: 1px solid rgba(27, 27, 27, 0.12);
-    color: ${BYRNE_PALETTE.black};
+    border-top: 1px solid var(--euclid-line);
+    color: var(--euclid-black);
   }
   .controls {
     display: flex;
     align-items: center;
     gap: 0.5em;
     padding: 0.5em 0.8em;
-    border-top: 1px solid rgba(27, 27, 27, 0.12);
+    border-top: 1px solid var(--euclid-line);
     font-family: system-ui, sans-serif;
   }
   button.ctrl {
     appearance: none;
-    border: 1px solid rgba(27, 27, 27, 0.35);
-    background: ${BYRNE_PALETTE.background};
-    color: ${BYRNE_PALETTE.black};
+    border: 1px solid var(--euclid-line-strong);
+    background: var(--euclid-background);
+    color: var(--euclid-black);
     border-radius: 4px;
     width: 2.1em;
     height: 2.1em;
@@ -93,14 +101,14 @@ const TEMPLATE = `
     justify-content: center;
   }
   button.ctrl:hover:not(:disabled) {
-    background: rgba(27, 27, 27, 0.08);
+    background: var(--euclid-hover);
   }
   button.ctrl:disabled {
     opacity: 0.35;
     cursor: default;
   }
   button.ctrl:focus-visible {
-    outline: 2px solid ${BYRNE_PALETTE.blue};
+    outline: 2px solid var(--euclid-blue);
     outline-offset: 1px;
   }
   .dots {
@@ -114,20 +122,20 @@ const TEMPLATE = `
     width: 0.6em;
     height: 0.6em;
     border-radius: 50%;
-    border: 1px solid rgba(27, 27, 27, 0.4);
+    border: 1px solid var(--euclid-line-strong);
     background: transparent;
     padding: 0;
     cursor: pointer;
   }
   .dot[aria-current="true"] {
-    background: ${BYRNE_PALETTE.red};
-    border-color: ${BYRNE_PALETTE.red};
+    background: var(--euclid-red);
+    border-color: var(--euclid-red);
   }
   .error {
     padding: 1em;
     font-family: system-ui, sans-serif;
     font-style: normal;
-    color: ${BYRNE_PALETTE.red};
+    color: var(--euclid-red);
     white-space: pre-wrap;
   }
   .title {

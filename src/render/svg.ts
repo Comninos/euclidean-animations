@@ -244,8 +244,10 @@ export function renderScene(scene: Scene): SVGGElement {
   return g;
 }
 
-/** Create the root <svg> element for a proposition's stage, with the
- * y-flipped viewBox and Byrne background rect. */
+/** Create the root <svg> element for a proposition's stage with the
+ * y-flipped viewBox. The stage background comes from the player's CSS
+ * (var(--euclid-background) on the host/stage-wrap), not an SVG rect —
+ * a rect child would be wiped by the timeline's renderStatic anyway. */
 export function createStageSvg(view: ViewBox): SVGSVGElement {
   const svg = el('svg');
   setAttrs(svg, {
@@ -254,16 +256,5 @@ export function createStageSvg(view: ViewBox): SVGSVGElement {
     class: 'euclid-stage',
     'preserveAspectRatio': 'xMidYMid meet',
   });
-
-  const bg = el('rect');
-  setAttrs(bg, {
-    x: view.x,
-    y: -(view.y + view.height),
-    width: view.width,
-    height: view.height,
-    class: 'euclid-background',
-  });
-  svg.appendChild(bg);
-
   return svg;
 }

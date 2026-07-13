@@ -33,6 +33,43 @@ The site deploys to GitHub Pages on every push to `main` (see `.github/workflows
 
 In Obsidian, put the `<iframe>` tag directly in a note; Obsidian Publish renders it as-is.
 
+### Theming embeds
+
+The viewer supports a dark Byrne palette and exact background matching:
+
+- `viewer.html?prop=I.1&theme=dark` — dark theme (dark ground, paper-white ink).
+- `...&bg=%23262626` — set the exact background color (URL-encoded hex) so the embed blends into your page.
+
+To follow **Obsidian's own light/dark toggle live** (which is independent of the OS/browser preference), add this to your Obsidian Publish `publish.js`. It answers each embed when it loads and re-broadcasts whenever the reader flips the theme:
+
+```js
+(function () {
+  var FRAMES = 'iframe[src*="euclidean-animations/viewer.html"]';
+  function theme() {
+    return document.body.classList.contains('theme-dark') ? 'dark' : 'light';
+  }
+  function send(frame) {
+    if (frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'euclid-theme', theme: theme() }, '*');
+    }
+  }
+  function broadcast() {
+    document.querySelectorAll(FRAMES).forEach(send);
+  }
+  // Each viewer announces itself when loaded; answer with the current theme.
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.type === 'euclid-ready') broadcast();
+  });
+  // Re-broadcast when the reader toggles Obsidian's theme.
+  new MutationObserver(broadcast).observe(document.body, {
+    attributes: true,
+    attributeFilter: ['class'],
+  });
+})();
+```
+
+The message format is `{ type: 'euclid-theme', theme: 'dark' | 'light', bg?: '#hex' }` — `bg` optionally overrides the background color to match a custom theme exactly.
+
 ## Authoring a proposition
 
 Add a file under `public/propositions/` (e.g. `I.5.json`). No rebuild of the JavaScript is needed — proposition JSON is fetched at runtime.

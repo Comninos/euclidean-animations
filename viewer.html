@@ -5,24 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Euclid Viewer</title>
   <style>
-    :root {
-      --cream: #FAF3E3;
-      --black: #1B1B1B;
-      --red: #D13438;
-    }
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
-      background: var(--cream);
+      background: #FAF3E3;
+    }
+    body.dark {
+      background: #1E1E1E;
+      color: #E6E0D3;
     }
     body {
       display: flex;
       align-items: stretch;
       justify-content: stretch;
       font-family: Georgia, 'Times New Roman', serif;
-      color: var(--black);
+      color: #1B1B1B;
     }
     euclid-player {
       flex: 1;
@@ -37,10 +36,11 @@
       text-align: center;
       font-style: italic;
     }
+    .missing a { color: inherit; }
     .missing code {
       font-family: system-ui, sans-serif;
       font-style: normal;
-      background: rgba(27,27,27,0.06);
+      background: rgba(128,128,128,0.15);
       padding: 0.1em 0.4em;
       border-radius: 3px;
     }
@@ -58,16 +58,58 @@
   </div>
   <script>
     // Classic script: runs during parse, before the module below, so the
-    // element already carries its src when the custom element upgrades.
+    // element already carries its src/theme when the custom element upgrades
+    // (also avoids a light-theme flash when ?theme=dark).
     (function () {
-      var prop = new URLSearchParams(window.location.search).get('prop');
+      var params = new URLSearchParams(window.location.search);
       var player = document.getElementById('player');
+
+      var prop = params.get('prop');
       if (prop && /^[A-Za-z0-9._-]+$/.test(prop)) {
         player.setAttribute('src', 'propositions/' + prop + '.json');
         player.hidden = false;
         document.title = 'Euclid ' + prop;
       } else {
         document.getElementById('missing').hidden = false;
+      }
+
+      function applyTheme(theme) {
+        var dark = theme === 'dark';
+        if (dark) player.setAttribute('theme', 'dark');
+        else player.removeAttribute('theme');
+        document.body.classList.toggle('dark', dark);
+      }
+
+      // Exact page-color match: ?bg=%23202020 (any CSS hex; # optional).
+      function applyBg(bg) {
+        if (!/^#?[0-9a-fA-F]{3,8}$/.test(bg)) return;
+        var color = bg.charAt(0) === '#' ? bg : '#' + bg;
+        document.body.style.background = color;
+        player.style.setProperty('--euclid-background', color);
+      }
+
+      // Static theming via URL: ?theme=dark, ?bg=%23<hex>.
+      applyTheme(params.get('theme'));
+      var bg = params.get('bg');
+      if (bg) applyBg(bg);
+
+      // Live theming from the embedding page (e.g. Obsidian's light/dark
+      // toggle, relayed by publish.js — see README):
+      //   frame.contentWindow.postMessage(
+      //     { type: 'euclid-theme', theme: 'dark', bg: '#1e1e1e' }, '*')
+      window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (!d || d.type !== 'euclid-theme') return;
+        if (d.theme === 'dark' || d.theme === 'light') applyTheme(d.theme);
+        if (typeof d.bg === 'string') applyBg(d.bg);
+      });
+
+      // Tell the parent we're ready to be themed, so it can answer with the
+      // current theme without polling (covers the load-order race).
+      if (window.parent !== window) {
+        window.addEventListener('load', function () {
+          window.parent.postMessage({ type: 'euclid-ready' }, '*');
+        });
       }
     })();
   </script>

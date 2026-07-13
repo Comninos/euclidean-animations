@@ -16,8 +16,32 @@ export const BYRNE_PALETTE = {
   construction: '#6B6459',
 } as const;
 
+export type ByrnePalette = Record<keyof typeof BYRNE_PALETTE, string>;
+
+/** Dark-theme counterpart: dark ground, warm paper-white ink, hues nudged
+ * lighter where the light-theme values would go muddy on a dark ground. */
+export const BYRNE_PALETTE_DARK: ByrnePalette = {
+  background: '#1E1E1E',
+  black: '#E6E0D3',
+  red: '#E05B52',
+  yellow: '#F1C232',
+  blue: '#6D95D4',
+  construction: '#98917F',
+};
+
+/** CSS declarations mapping a palette onto the --euclid-* custom
+ * properties every rendered shape and the player chrome consume. */
+export function paletteCssDeclarations(palette: ByrnePalette): string {
+  return Object.entries(palette)
+    .map(([name, value]) => `--euclid-${name}: ${value};`)
+    .join('\n    ');
+}
+
+/** Colors resolve to CSS custom properties (declared on the player's
+ * :host from the palettes above), so switching theme restyles every
+ * already-rendered shape instantly without a re-render. */
 export function resolveFillOrStroke(color: ColorName): string {
-  return BYRNE_PALETTE[color];
+  return `var(--euclid-${color})`;
 }
 
 /** Stroke width in SVG user units (the viewBox is in plane units, so this
