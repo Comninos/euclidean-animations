@@ -59,8 +59,18 @@ To follow **Obsidian's own light/dark toggle live** (which is independent of the
     document.querySelectorAll(FRAMES).forEach(send);
   }
   // Each viewer announces itself when loaded; answer with the current theme.
+  // Viewers also report their ideal height (the geometry at full width
+  // plus the caption/controls chrome) — size the iframe to match so the
+  // drawing is as large as the width allows, for any proposition.
   window.addEventListener('message', function (e) {
-    if (e.data && e.data.type === 'euclid-ready') broadcast();
+    if (!e.data) return;
+    if (e.data.type === 'euclid-ready') broadcast();
+    if (e.data.type === 'euclid-size' && typeof e.data.height === 'number') {
+      var h = Math.max(200, Math.min(2000, Math.round(e.data.height)));
+      document.querySelectorAll(FRAMES).forEach(function (frame) {
+        if (frame.contentWindow === e.source) frame.style.height = h + 'px';
+      });
+    }
   });
   // Re-broadcast when the reader toggles Obsidian's theme.
   new MutationObserver(broadcast).observe(document.body, {
@@ -73,7 +83,7 @@ To follow **Obsidian's own light/dark toggle live** (which is independent of the
 })();
 ```
 
-The message format is `{ type: 'euclid-theme', theme: 'dark' | 'light', bg?: '#hex' }` — `bg` optionally overrides the background color to match a custom theme exactly.
+The message format is `{ type: 'euclid-theme', theme: 'dark' | 'light', bg?: '#hex' }` — `bg` optionally overrides the background color to match a custom theme exactly. In the other direction, each viewer posts `{ type: 'euclid-ready' }` when loaded and `{ type: 'euclid-size', height }` whenever its ideal height changes (on load and on resize), which the snippet above uses to auto-size the iframe. The `height` attribute on the `<iframe>` then only matters as the pre-JS fallback.
 
 ### Full-bleed embeds
 
@@ -96,7 +106,7 @@ iframe[src*="euclidean-animations"] {
 }
 ```
 
-Note: the wider the iframe gets relative to its `height`, the more the fixed-height `fill` player letterboxes horizontally (the drawing centers with empty margin left and right, since it won't exceed the proposition's aspect ratio). Pair full-bleed width with a proportionally generous `height` attribute on the `<iframe>` to keep the drawn geometry large — e.g. a `width: calc(100% + 96px)` embed wants a taller `height` than a narrow inline one.
+With the `euclid-size` listener from the publish.js snippet above, the iframe's height follows its width automatically — full-bleed embeds get the geometry at the full available width with no letterboxing, for any proposition's aspect ratio. Without that script, size manually: the wider the iframe gets relative to its `height`, the more the fixed-height `fill` player letterboxes horizontally, so pair full-bleed width with a proportionally generous `height` attribute (a roughly square proposition like I.2 wants `height ≈ width + 170`).
 
 ## Authoring a proposition
 

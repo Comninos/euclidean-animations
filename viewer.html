@@ -126,6 +126,32 @@
         window.addEventListener('load', function () {
           window.parent.postMessage({ type: 'euclid-ready' }, '*');
         });
+
+        // Auto-height: report the ideal iframe height for our current
+        // width — the stage at its natural aspect plus the fixed chrome
+        // (title/caption/controls) — so the embedding page can size the
+        // iframe to show the geometry as large as the width allows
+        // (see the euclid-size listener in the README's publish.js).
+        // Depends only on width, so no resize feedback loop.
+        var sizeTimer = null;
+        function reportSize() {
+          var sr = player.shadowRoot;
+          if (!sr) return;
+          var aspect = parseFloat(getComputedStyle(player).getPropertyValue('--euclid-aspect'));
+          var stage = sr.querySelector('.stage-wrap');
+          if (!aspect || !stage) return;
+          var chrome = player.getBoundingClientRect().height - stage.getBoundingClientRect().height;
+          var height = Math.round(window.innerWidth / aspect + chrome);
+          window.parent.postMessage({ type: 'euclid-size', height: height }, '*');
+        }
+        function reportSizeSoon() {
+          clearTimeout(sizeTimer);
+          // Small delay lets the caption-height measurement settle first.
+          sizeTimer = setTimeout(reportSize, 80);
+        }
+        // First euclid-step fires once the proposition has mounted.
+        player.addEventListener('euclid-step', reportSizeSoon, { once: true });
+        window.addEventListener('resize', reportSizeSoon);
       }
     })();
   </script>
