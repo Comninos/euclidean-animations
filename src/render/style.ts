@@ -26,7 +26,7 @@ export interface Palette {
 
 export const LIGHT_PALETTE: Palette = {
   background: '#FFFCF0',
-  black: '#0D0C0C',
+  black: '#100F0F',
   construction: '#B7B5AC',
   red: '#C03E35',
   blue: '#205EA6',
@@ -36,7 +36,7 @@ export const LIGHT_PALETTE: Palette = {
 };
 
 export const DARK_PALETTE: Palette = {
-  background: '#0D0C0C',
+  background: '#100F0F',
   black: '#CECDC3',
   construction: '#575653',
   red: '#C03E35',
