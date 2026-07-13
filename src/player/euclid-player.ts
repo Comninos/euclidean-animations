@@ -162,11 +162,11 @@ const TEMPLATE = `
     font-weight: bold;
     font-style: normal;
     font-size: 1rem;
-    text-align: center;
+    text-align: left;
   }
 </style>
-<div class="title" part="title" hidden></div>
 <div class="stage-wrap" part="stage-wrap"></div>
+<div class="title" part="title" hidden></div>
 <div class="caption" part="caption"></div>
 <div class="controls" part="controls">
   <button class="ctrl" data-action="restart" title="Restart" aria-label="Restart">&#9198;</button>
@@ -381,16 +381,15 @@ export class EuclidPlayerElement extends HTMLElement {
   }
 
   /** Reserve stable space in .caption for the tallest caption text across
-   * every step of the current proposition (including the title, which
-   * displays as the caption at step 0), measured at the caption's *current*
-   * rendered width. This prevents the stage above from jumping when
-   * stepping between captions that wrap to different numbers of lines —
-   * the caption block is sized once up front instead of growing/shrinking
-   * per step. Called after mount() and on every host resize (the wrap
-   * point depends on width). */
+   * every step of the current proposition, measured at the caption's
+   * *current* rendered width. This prevents the stage above from jumping
+   * when stepping between captions that wrap to different numbers of
+   * lines — the caption block is sized once up front instead of
+   * growing/shrinking per step. Called after mount() and on every host
+   * resize (the wrap point depends on width). */
   private syncCaptionHeight(): void {
     if (!this.prop) return;
-    const texts: string[] = [this.prop.title ?? ''];
+    const texts: string[] = [];
     for (const step of this.prop.steps) texts.push(step.text ?? '');
     const max = this.measureMaxCaptionHeight(texts);
     this.captionEl.style.height = max > 0 ? `${max}px` : '';
@@ -460,13 +459,10 @@ export class EuclidPlayerElement extends HTMLElement {
     this.backBtn.disabled = this.timeline?.isAtStart ?? step <= 0;
     this.forwardBtn.disabled = this.timeline?.isAtEnd ?? step >= total;
     const stepDef = this.prop?.steps[step - 1];
-    // Caption reflects the most recently completed step's text (or a
-    // neutral prompt at step 0, before anything has been constructed).
-    if (step === 0) {
-      this.captionEl.textContent = this.prop?.title ?? '';
-    } else {
-      this.captionEl.textContent = stepDef?.text ?? '';
-    }
+    // Caption reflects the most recently completed step's text. At step 0
+    // it stays empty — the title now sits directly above the caption, so
+    // repeating it there would read as a duplicate.
+    this.captionEl.textContent = step === 0 ? '' : stepDef?.text ?? '';
     this.dispatchEvent(new CustomEvent('euclid-step', { detail: { step, total }, bubbles: true, composed: true }));
   }
 
