@@ -1,90 +1,96 @@
 {
-  "id": "book-i-prop-3",
-  "title": "Book I, Proposition 3",
-  "view": {
-    "x": -3,
-    "y": -3,
-    "width": 10,
-    "height": 8
-  },
+  "id": "I.3",
+  "title": "To cut off from the greater of two given unequal straight lines a part equal to the lesser.",
   "given": {
     "A": [0, 0],
-    "B": [5, 0],
-    "C": [-1.5, 2.5],
-    "D": [0.5, 2.5]
+    "B": [2.5, 0],
+    "C": [-0.75, 1.25],
+    "D": [0.25, 1.25]
   },
   "steps": [
     {
+      "id": "given-lines",
+      "text": "Let AB, CD be the two given unequal straight lines, of which let AB be the greater. It is required to cut off from AB the greater a part equal to CD the less.",
       "add": [
-        { "id": "AB", "op": "segment", "from": "A", "to": "B" },
-        { "id": "CD", "op": "segment", "from": "C", "to": "D" }
-      ],
-      "set": [
-        { "targets": ["A", "B", "AB"], "color": "blue" },
-        { "targets": ["C", "D", "CD"], "color": "red" }
+        { "op": "point", "id": "A", "label": "A" },
+        { "op": "point", "id": "B", "label": "B" },
+        { "op": "point", "id": "C", "label": "C" },
+        { "op": "point", "id": "D", "label": "D" },
+        { "op": "segment", "id": "AB", "from": "A", "to": "B" },
+        { "op": "segment", "id": "CD", "from": "C", "to": "D" }
       ]
     },
     {
+      "id": "join-AC",
+      "text": "Let the straight line AC be joined.",
       "add": [
-        { "id": "AC", "op": "segment", "from": "A", "to": "C" }
-      ],
-      "highlight": ["A", "C", "AC"]
-    },
-    {
-      "add": [
-        { "id": "circ_A_C", "op": "circle", "center": "A", "through": "C" },
-        { "id": "circ_C_A", "op": "circle", "center": "C", "through": "A" },
-        { "id": "P", "op": "intersect", "circleA": "circ_A_C", "circleB": "circ_C_A", "pick": 0 }
-      ],
-      "set": [
-        { "targets": ["circ_A_C", "circ_C_A"], "role": "construction" }
+        { "op": "segment", "id": "AC", "from": "A", "to": "C" }
       ]
     },
     {
+      "id": "equilateral-circles",
+      "text": "On AC let the equilateral triangle be constructed (Prop. I.1): with centre A, radius AC, describe a circle; with centre C, radius CA, describe another.",
       "add": [
-        { "id": "PA", "op": "ray", "from": "P", "through": "A" },
-        { "id": "PC", "op": "ray", "from": "P", "through": "C" }
+        { "op": "circle", "id": "cAC1", "center": "A", "through": "C" },
+        { "op": "circle", "id": "cAC2", "center": "C", "through": "A" }
+      ]
+    },
+    {
+      "id": "find-P",
+      "text": "Let P be the point where the circles cut one another, and produce AP and CP in a straight line with CA.",
+      "add": [
+        { "op": "intersect", "id": "P", "of": ["cAC1", "cAC2"], "pick": 0, "label": "P" },
+        { "op": "ray", "id": "PA", "origin": "P", "through": "A" },
+        { "op": "ray", "id": "PC", "origin": "P", "through": "C" }
       ],
       "set": [
+        { "targets": ["cAC1", "cAC2"], "role": "hidden" },
         { "targets": ["PA", "PC"], "role": "construction" }
       ]
     },
     {
+      "id": "find-G",
+      "text": "With centre C, and radius CD, describe the circle, cutting CP produced at the point G.",
       "add": [
-        { "id": "circ_C_D", "op": "circle", "center": "C", "through": "D" },
-        { "id": "G", "op": "intersect", "line": "PC", "circle": "circ_C_D", "pick": 1 }
+        { "op": "circle", "id": "cCD", "center": "C", "through": "D" },
+        { "op": "intersect", "id": "G", "of": ["cCD", "PC"], "pick": 1, "label": "G" }
       ],
       "set": [
-        { "targets": ["circ_C_D"], "role": "construction" }
+        { "targets": ["cCD"], "role": "construction" }
       ]
     },
     {
+      "id": "find-L",
+      "text": "With centre P, and radius PG, describe the circle, cutting AP produced at the point L.",
       "add": [
-        { "id": "circ_P_G", "op": "circle", "center": "P", "through": "G" },
-        { "id": "L", "op": "intersect", "line": "PA", "circle": "circ_P_G", "pick": 1 }
+        { "op": "circle", "id": "cPG", "center": "P", "through": "G" },
+        { "op": "intersect", "id": "L", "of": ["cPG", "PA"], "pick": 1, "label": "L" }
       ],
       "set": [
-        { "targets": ["circ_P_G"], "role": "construction" }
-      ],
-      "highlight": ["L"]
+        { "targets": ["cPG"], "role": "construction" }
+      ]
     },
     {
+      "id": "find-E",
+      "text": "With centre A, and radius AL, describe the circle, cutting AB at the point E.",
       "add": [
-        { "id": "circ_A_L", "op": "circle", "center": "A", "through": "L" },
-        { "id": "E", "op": "intersect", "line": "AB", "circle": "circ_A_L", "pick": 1 }
+        { "op": "circle", "id": "cAL", "center": "A", "through": "L" },
+        { "op": "intersect", "id": "E", "of": ["cAL", "AB"], "pick": 1, "label": "E" }
       ],
       "set": [
-        { "targets": ["circ_A_L"], "role": "construction" }
-      ],
-      "highlight": ["E"]
+        { "targets": ["cAL"], "role": "construction" }
+      ]
     },
     {
+      "id": "draw-AE",
+      "text": "Then AE shall be equal to CD.",
       "add": [
-        { "id": "AE", "op": "segment", "from": "A", "to": "E" }
-      ],
-      "set": [
-        { "targets": ["AE"], "color": "red" }
-      ],
+        { "op": "segment", "id": "AE", "from": "A", "to": "E" }
+      ]
+    },
+    {
+      "id": "qed",
+      "text": "For AL and AE are equal, and CG and CD are equal, and PG equals PL; therefore AE equals CD. Wherefore from AB the greater there has been cut off AE equal to CD the less, as was required.",
       "highlight": ["AE", "CD"]
     }
   ]
