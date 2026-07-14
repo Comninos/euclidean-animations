@@ -1,0 +1,91 @@
+{
+  "id": "book-i-prop-3",
+  "title": "Book I, Proposition 3",
+  "view": {
+    "x": -3,
+    "y": -3,
+    "width": 10,
+    "height": 8
+  },
+  "given": {
+    "A": [0, 0],
+    "B": [5, 0],
+    "C": [-1.5, 2.5],
+    "D": [0.5, 2.5]
+  },
+  "steps": [
+    {
+      "add": [
+        { "id": "AB", "op": "segment", "from": "A", "to": "B" },
+        { "id": "CD", "op": "segment", "from": "C", "to": "D" }
+      ],
+      "set": [
+        { "targets": ["A", "B", "AB"], "color": "blue" },
+        { "targets": ["C", "D", "CD"], "color": "red" }
+      ]
+    },
+    {
+      "add": [
+        { "id": "AC", "op": "segment", "from": "A", "to": "C" }
+      ],
+      "highlight": ["A", "C", "AC"]
+    },
+    {
+      "add": [
+        { "id": "circ_A_C", "op": "circle", "center": "A", "through": "C" },
+        { "id": "circ_C_A", "op": "circle", "center": "C", "through": "A" },
+        { "id": "P", "op": "intersect", "circleA": "circ_A_C", "circleB": "circ_C_A", "pick": 0 }
+      ],
+      "set": [
+        { "targets": ["circ_A_C", "circ_C_A"], "role": "construction" }
+      ]
+    },
+    {
+      "add": [
+        { "id": "PA", "op": "ray", "from": "P", "through": "A" },
+        { "id": "PC", "op": "ray", "from": "P", "through": "C" }
+      ],
+      "set": [
+        { "targets": ["PA", "PC"], "role": "construction" }
+      ]
+    },
+    {
+      "add": [
+        { "id": "circ_C_D", "op": "circle", "center": "C", "through": "D" },
+        { "id": "G", "op": "intersect", "line": "PC", "circle": "circ_C_D", "pick": 1 }
+      ],
+      "set": [
+        { "targets": ["circ_C_D"], "role": "construction" }
+      ]
+    },
+    {
+      "add": [
+        { "id": "circ_P_G", "op": "circle", "center": "P", "through": "G" },
+        { "id": "L", "op": "intersect", "line": "PA", "circle": "circ_P_G", "pick": 1 }
+      ],
+      "set": [
+        { "targets": ["circ_P_G"], "role": "construction" }
+      ],
+      "highlight": ["L"]
+    },
+    {
+      "add": [
+        { "id": "circ_A_L", "op": "circle", "center": "A", "through": "L" },
+        { "id": "E", "op": "intersect", "line": "AB", "circle": "circ_A_L", "pick": 1 }
+      ],
+      "set": [
+        { "targets": ["circ_A_L"], "role": "construction" }
+      ],
+      "highlight": ["E"]
+    },
+    {
+      "add": [
+        { "id": "AE", "op": "segment", "from": "A", "to": "E" }
+      ],
+      "set": [
+        { "targets": ["AE"], "color": "red" }
+      ],
+      "highlight": ["AE", "CD"]
+    }
+  ]
+}
