@@ -1,6 +1,6 @@
 {
   "id": "I.4",
-  "title": "If two triangles have the two sides equal to two sides respectively, and have the angles contained by the equal straight lines equal, they will also have the base equal to the base, the triangle equal to the triangle, and the remaining angles equal to the remaining angles respectively.",
+  "title": "If two triangles have the two sides equal to two sides respectively, and have the angles contained by the equal straight lines equal, they will also have the base equal to the base, the triangle will be equal to the triangle, and the remaining angles will be equal to the remaining angles respectively, namely those which the equal sides subtend.",
   "given": {
     "A": [0, 0],
     "B": [1.55, 0],

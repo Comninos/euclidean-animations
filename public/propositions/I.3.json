@@ -1,6 +1,6 @@
 {
   "id": "I.3",
-  "title": "To cut off from the greater of two given unequal straight lines a part equal to the lesser.",
+  "title": "Given two unequal straight lines, to cut off from the greater a straight line equal to the less.",
   "given": {
     "A": [0, 0],
     "B": [2.5, 0],

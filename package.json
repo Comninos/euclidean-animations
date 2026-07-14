@@ -2,6 +2,8 @@
   "name": "euclidean-animations",
   "version": "0.1.0",
   "description": "Animated Euclidean constructions, rendered as minimal platonic line diagrams",
+  "license": "MIT",
+  "author": "Daniel Comninos",
   "type": "module",
   "private": true,
   "scripts": {

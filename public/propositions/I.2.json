@@ -1,6 +1,6 @@
 {
   "id": "I.2",
-  "title": "From a given point to draw a straight line equal to a given straight line.",
+  "title": "To place at a given point (as an extremity) a straight line equal to a given straight line.",
   "given": {
     "A": [
       -0.5,
