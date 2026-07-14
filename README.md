@@ -51,13 +51,30 @@ To follow **Obsidian's own light/dark toggle live** (which is independent of the
     return document.body.classList.contains('theme-dark') ? 'dark' : 'light';
   }
   function send(frame) {
-    if (frame.contentWindow) {
-      frame.contentWindow.postMessage({ type: 'euclid-theme', theme: theme() }, '*');
+    if (!frame.contentWindow) return;
+    // The full-bleed CSS pulls the iframe out of the text column with
+    // negative margins, but the iframe's PARENT still has the column's
+    // box — so the pixel inset back to the text edge is measurable, and
+    // the viewer uses it to align the title/caption with the page text.
+    var inset = 0;
+    if (frame.parentElement) {
+      inset = Math.max(0, Math.round(
+        frame.parentElement.getBoundingClientRect().left -
+        frame.getBoundingClientRect().left
+      ));
     }
+    frame.contentWindow.postMessage(
+      { type: 'euclid-theme', theme: theme(), inset: inset }, '*');
   }
   function broadcast() {
     document.querySelectorAll(FRAMES).forEach(send);
   }
+  // Inset changes at responsive breakpoints; re-send on resize.
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(broadcast, 150);
+  });
   // Each viewer announces itself when loaded; answer with the current theme.
   // Viewers also report their ideal height (the geometry at full width
   // plus the caption/controls chrome) — size the iframe to match so the
@@ -83,7 +100,7 @@ To follow **Obsidian's own light/dark toggle live** (which is independent of the
 })();
 ```
 
-The message format is `{ type: 'euclid-theme', theme: 'dark' | 'light', bg?: '#hex' }` — `bg` optionally overrides the background color to match a custom theme exactly. In the other direction, each viewer posts `{ type: 'euclid-ready' }` when loaded and `{ type: 'euclid-size', height }` whenever its ideal height changes (on load and on resize), which the snippet above uses to auto-size the iframe. The `height` attribute on the `<iframe>` then only matters as the pre-JS fallback.
+The message format is `{ type: 'euclid-theme', theme: 'dark' | 'light', bg?: '#hex', inset?: px }` — `bg` optionally overrides the background color to match a custom theme exactly, and `inset` aligns the player's title/caption text with the embedding page's text column (also settable statically as `?inset=48`). The viewer remembers the last applied theme in `localStorage`, so repeat visits paint the right ground before the relay message arrives. In the other direction, each viewer posts `{ type: 'euclid-ready' }` when loaded and `{ type: 'euclid-size', height }` whenever its ideal height changes (on load and on resize), which the snippet above uses to auto-size the iframe. The `height` attribute on the `<iframe>` then only matters as the pre-JS fallback.
 
 ### Full-bleed embeds
 

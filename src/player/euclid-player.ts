@@ -79,7 +79,10 @@ const TEMPLATE = `
        whole proposition, measured at the current width, so the stage above
        never jumps when a step's text wraps to a different line count. See
        measureCaptionHeight()/syncCaptionHeight() in EuclidPlayerElement. */
-    padding: 0.6em 1em;
+    /* --euclid-text-inset lets an embedding page align the player's text
+       with its own text column (see the inset field in the publish.js
+       snippet in the README); defaults to the player's own 1em gutter. */
+    padding: 0.6em var(--euclid-text-inset, 1em);
     font-style: italic;
     font-size: 0.95rem;
     line-height: 1.35;
@@ -157,7 +160,7 @@ const TEMPLATE = `
     white-space: pre-wrap;
   }
   .title {
-    padding: 0.7em 1em 0;
+    padding: 0.7em var(--euclid-text-inset, 1em) 0;
     font-weight: bold;
     font-style: normal;
     font-size: 1rem;
@@ -377,6 +380,10 @@ export class EuclidPlayerElement extends HTMLElement {
 
     if (this.hasAttribute('autoplay')) {
       void this.timeline.play();
+    } else {
+      // Show the completed figure on load — a blank stage tells the reader
+      // nothing. Pressing play replays the construction from the start.
+      this.timeline.goTo(prop.steps.length);
     }
   }
 
@@ -466,10 +473,17 @@ export class EuclidPlayerElement extends HTMLElement {
     this.dispatchEvent(new CustomEvent('euclid-step', { detail: { step, total }, bubbles: true, composed: true }));
   }
 
+  /** Re-run width-dependent layout (the reserved caption height). Public
+   * so an embedding page can call it after changing layout inputs the
+   * ResizeObserver can't see — e.g. setting --euclid-text-inset. */
+  refreshLayout(): void {
+    this.syncCaptionHeight();
+  }
+
   private onPlayStateChange(state: 'paused' | 'playing'): void {
     this.playBtn.innerHTML = state === 'playing' ? '&#10074;&#10074;' : '&#9654;';
     this.playBtn.setAttribute('aria-label', state === 'playing' ? 'Pause' : 'Play');
-    this.playBtn.disabled = state === 'paused' && (this.timeline?.isAtEnd ?? false);
+    // Play is never disabled: at the end it replays from the start.
   }
 
   private updateDots(step: number): void {

@@ -89,12 +89,32 @@
       function applyTheme(theme) {
         // Only 'dark' is a real theme attribute; 'light' or anything
         // invalid means the default (no attribute).
+        var dark = theme === 'dark';
         if (typeof theme === 'string' && theme !== 'light' && /^[a-z][a-z0-9-]*$/i.test(theme)) {
           player.setAttribute('theme', theme);
         } else {
           player.removeAttribute('theme');
         }
+        // The body class paints the right ground immediately, before the
+        // custom element upgrades — otherwise dark embeds flash light for
+        // the first few frames of a load.
+        document.body.classList.toggle('dark', dark);
+        // Remember the theme so the next load paints correctly from the
+        // first frame even when theming comes from postMessage (which
+        // necessarily arrives after first paint). May throw in iframes
+        // with third-party storage blocked; the class above still works.
+        try { localStorage.setItem('euclid-theme', dark ? 'dark' : 'light'); } catch (e) {}
         syncPageColors();
+      }
+
+      // Align the player's title/caption with the embedding page's text
+      // column: the parent measures the pixel inset and sends it (see the
+      // publish.js snippet in the README).
+      function applyInset(inset) {
+        if (typeof inset !== 'number' || !isFinite(inset) || inset < 0 || inset > 400) return;
+        player.style.setProperty('--euclid-text-inset', Math.round(inset) + 'px');
+        if (typeof player.refreshLayout === 'function') player.refreshLayout();
+        window.dispatchEvent(new Event('resize')); // re-report euclid-size
       }
 
       // Exact page-color match: ?bg=%23202020 (any CSS hex; # optional).
@@ -105,10 +125,18 @@
         player.style.setProperty('--euclid-background', color);
       }
 
-      // Static theming via URL: ?theme=dark, ?bg=%23<hex>.
-      applyTheme(params.get('theme'));
+      // Static theming via URL: ?theme=dark, ?bg=%23<hex>, ?inset=<px>.
+      // With no ?theme param, fall back to the theme remembered from the
+      // last visit so relay-driven embeds don't flash the wrong ground.
+      var initialTheme = params.get('theme');
+      if (initialTheme === null) {
+        try { initialTheme = localStorage.getItem('euclid-theme'); } catch (e) {}
+      }
+      applyTheme(initialTheme);
       var bg = params.get('bg');
       if (bg) applyBg(bg);
+      var inset = parseFloat(params.get('inset'));
+      if (!isNaN(inset)) applyInset(inset);
 
       // Live theming from the embedding page (e.g. Obsidian's light/dark
       // toggle, relayed by publish.js — see README):
@@ -119,6 +147,7 @@
         if (!d || d.type !== 'euclid-theme') return;
         if (typeof d.theme === 'string') applyTheme(d.theme);
         if (typeof d.bg === 'string') applyBg(d.bg);
+        if (typeof d.inset === 'number') applyInset(d.inset);
       });
 
       // Tell the parent we're ready to be themed, so it can answer with the

@@ -269,6 +269,12 @@ export class Timeline {
    * reached or pause()/goTo()/stepBackward() interrupts. */
   async play(): Promise<void> {
     if (this.playState === 'playing') return;
+    // Playing from the end replays from the start — this is also the
+    // normal activation path, since the player mounts showing the
+    // completed figure.
+    if (this.isAtEnd) {
+      this.renderStatic(0);
+    }
     this.playState = 'playing';
     this.events.onPlayStateChange?.(this.playState);
     const token = ++this.playToken;
