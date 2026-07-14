@@ -90,12 +90,19 @@ const TEMPLATE = `
     box-sizing: border-box;
   }
   .controls {
+    /* Three-column grid: transport buttons left, dots dead-center of the
+       whole bar (the empty 1fr third column balances the first). */
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0.4em var(--euclid-text-inset, 0.8em) 0.6em;
+    font-family: system-ui, sans-serif;
+  }
+  .transport {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.5em;
-    padding: 0.4em 0.8em 0.6em;
-    font-family: system-ui, sans-serif;
+    gap: 0.4em;
+    justify-self: start;
   }
   button.ctrl {
     appearance: none;
@@ -104,7 +111,7 @@ const TEMPLATE = `
     color: var(--euclid-control);
     width: 1.9em;
     height: 1.9em;
-    font-size: 0.95rem;
+    font-size: 1.25rem;
     line-height: 1;
     cursor: pointer;
     display: inline-flex;
@@ -132,8 +139,8 @@ const TEMPLATE = `
     display: flex;
     align-items: center;
     gap: 0.35em;
-    margin-left: 0.4em;
     flex-wrap: wrap;
+    justify-content: center;
   }
   .dot {
     width: 0.55em;
@@ -171,10 +178,12 @@ const TEMPLATE = `
 <div class="title" part="title" hidden></div>
 <div class="caption" part="caption"></div>
 <div class="controls" part="controls">
-  <button class="ctrl" data-action="restart" title="Restart" aria-label="Restart">&#9198;</button>
-  <button class="ctrl" data-action="back" title="Step back" aria-label="Step back">&#8249;</button>
-  <button class="ctrl" data-action="play" title="Play/Pause" aria-label="Play or pause">&#9654;</button>
-  <button class="ctrl" data-action="forward" title="Step forward" aria-label="Step forward">&#8250;</button>
+  <div class="transport" part="transport">
+    <button class="ctrl" data-action="restart" title="Restart" aria-label="Restart">&#9198;</button>
+    <button class="ctrl" data-action="back" title="Step back" aria-label="Step back">&#8249;</button>
+    <button class="ctrl" data-action="play" title="Play/Pause" aria-label="Play or pause">&#9654;</button>
+    <button class="ctrl" data-action="forward" title="Step forward" aria-label="Step forward">&#8250;</button>
+  </div>
   <div class="dots" part="dots"></div>
 </div>
 `;
@@ -358,7 +367,10 @@ export class EuclidPlayerElement extends HTMLElement {
     const svg = createStageSvg(view);
     this.stageWrap.appendChild(svg);
 
-    const aspect = view.width / view.height;
+    // The stage box is never taller than it is wide: tall geometry
+    // letterboxes inside a square box instead of stretching the player
+    // (and, via the euclid-size report, the embedding iframe) vertically.
+    const aspect = Math.max(1, view.width / view.height);
     this.style.setProperty('--euclid-aspect', String(aspect));
 
     if (prop.title) {
@@ -370,6 +382,7 @@ export class EuclidPlayerElement extends HTMLElement {
     this.setControlsEnabled(true);
 
     this.timeline = new Timeline(prop, svg, {
+      onStepStart: (step) => this.showStep(step),
       onStepChange: (step, total) => this.onStepChange(step, total),
       onPlayStateChange: (state) => this.onPlayStateChange(state),
     });
@@ -456,20 +469,28 @@ export class EuclidPlayerElement extends HTMLElement {
     }
   }
 
-  private onStepChange(step: number, total: number): void {
+  /** Show a step's caption and active dot. Called when a step *starts*
+   * animating (so the reader follows the text while the construction
+   * draws) and again when it commits or is landed on statically. */
+  private showStep(step: number): void {
     this.updateDots(step);
-    // Use the timeline's isAtStart/isAtEnd (which account for an in-flight
-    // forward transition via effectiveStep) rather than the raw settled
-    // `step` param — otherwise the back button stays disabled for the
-    // entire duration of the very first step's animation, since
-    // onStepChange only fires once that animation *commits*.
-    this.backBtn.disabled = this.timeline?.isAtStart ?? step <= 0;
-    this.forwardBtn.disabled = this.timeline?.isAtEnd ?? step >= total;
     const stepDef = this.prop?.steps[step - 1];
-    // Caption reflects the most recently completed step's text. At step 0
-    // it stays empty — the title now sits directly above the caption, so
-    // repeating it there would read as a duplicate.
+    // At step 0 the caption stays empty — the title sits directly above
+    // the caption, so repeating it there would read as a duplicate.
     this.captionEl.textContent = step === 0 ? '' : stepDef?.text ?? '';
+    // isAtStart/isAtEnd account for an in-flight forward transition via
+    // the timeline's effectiveStep, so these stay correct whether we're
+    // called at animation start or at commit.
+    this.backBtn.disabled = this.timeline?.isAtStart ?? step <= 0;
+    this.forwardBtn.disabled = this.timeline?.isAtEnd ?? step >= this.totalSteps();
+  }
+
+  private totalSteps(): number {
+    return this.prop?.steps.length ?? 0;
+  }
+
+  private onStepChange(step: number, total: number): void {
+    this.showStep(step);
     this.dispatchEvent(new CustomEvent('euclid-step', { detail: { step, total }, bubbles: true, composed: true }));
   }
 

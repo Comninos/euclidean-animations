@@ -17,11 +17,17 @@ import { renderShape, renderScene, type RenderedShape } from '../render/svg';
 export type PlayState = 'paused' | 'playing';
 
 export interface TimelineEvents {
+  /** Fires when a forward transition *begins* animating toward `step` —
+   * the moment the step's caption should appear, so the reader can follow
+   * the text while the construction draws rather than after. */
+  onStepStart?: (step: number, total: number) => void;
+  /** Fires when a step *commits* (its animation completed) or the timeline
+   * lands statically on a step via goTo/stepBackward/restart. */
   onStepChange?: (step: number, total: number) => void;
   onPlayStateChange?: (state: PlayState) => void;
 }
 
-const BEAT_PAUSE_MS = 550;
+const BEAT_PAUSE_MS = 750;
 
 /** Tracks the SVG nodes currently on stage for each shape id, so later
  * steps (restyle, highlight, or a future removal) can find and mutate them
@@ -189,6 +195,7 @@ export class Timeline {
 
     const targetStep = this.step + 1;
     this.animatingTarget = targetStep;
+    this.events.onStepStart?.(targetStep, this.totalSteps);
     const currentScene = stateAt(this.prop, this.step);
     const nextScene = stateAt(this.prop, targetStep);
     const stepDef = this.prop.steps[this.step];
