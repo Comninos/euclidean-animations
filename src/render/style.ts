@@ -28,10 +28,12 @@ export const LIGHT_PALETTE: Palette = {
   background: '#FFFCF0',
   black: '#100F0F',
   construction: '#B7B5AC',
-  red: '#C03E35',
+  red: '#E24F45',
   blue: '#205EA6',
   yellow: '#AD8301',
-  accent: '#C03E35',
+  // Punchier than Flexoki base red so the current-step accent reads clearly
+  // on paper; dark theme keeps the calmer #C03E35 (see DARK_PALETTE).
+  accent: '#E24F45',
   control: '#878580',
 };
 

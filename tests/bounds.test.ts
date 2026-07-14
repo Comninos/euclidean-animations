@@ -59,11 +59,36 @@ describe('computeViewBox', () => {
       ],
     };
     const view = computeViewBox(stateAt(withHiddenCircles, withHiddenCircles.steps.length));
-    // Without the circles, only the points A(-1,0), B(1,0), C(0,√3) and
-    // segment AB remain: the frame shrinks well inside the circle extents.
-    expect(view.x).toBeGreaterThan(-2);
-    expect(view.x + view.width).toBeLessThan(2);
-    expect(view.y + view.height).toBeLessThan(2.5);
+    // Without the circles, only A/B/C and AB remain — well inside the
+    // circle extents. The floor on view extent still expands the box for
+    // stroke scale, but it must not be driven by the hidden circles
+    // (those span x ∈ [-3, 3]).
+    expect(view.width).toBe(5.5);
+    expect(view.height).toBe(5.5);
+    expect(view.x).toBeGreaterThan(-3.5);
+    expect(view.x + view.width).toBeLessThan(3.5);
+  });
+
+  it('floors small frames so compact diagrams do not over-scale strokes', () => {
+    const tiny: Proposition = {
+      id: 'tiny',
+      title: 'tiny',
+      given: { A: [0, 0], B: [1, 0] },
+      steps: [
+        {
+          add: [
+            { op: 'point', id: 'A' },
+            { op: 'point', id: 'B' },
+            { op: 'segment', id: 'AB', from: 'A', to: 'B' },
+          ],
+        },
+      ],
+    };
+    const view = computePropositionViewBox(tiny);
+    expect(view.width).toBe(5.5);
+    expect(view.height).toBe(5.5);
+    // Content stays centered in the floored frame.
+    expect(view.x + view.width / 2).toBeCloseTo(0.5, 5);
   });
 
   it('proposition frame covers scaffolding while it is visible, even if later hidden', () => {

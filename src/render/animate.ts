@@ -19,7 +19,7 @@ import {
   roleFillOpacity,
   styleForShape,
 } from './style';
-import { renderShape, toSvgPoint, type RenderedShape } from './svg';
+import { appendRenderedShape, renderShape, toSvgPoint, type RenderedShape } from './svg';
 
 // ---------------------------------------------------------------------------
 // Easing
@@ -219,7 +219,7 @@ export function animateAdd(
   shape: Shape,
   rendered: RenderedShape
 ): TweenGroupHandle {
-  container.appendChild(rendered.node);
+  appendRenderedShape(container, rendered);
   const style = styleForShape(shape);
   const handles: TweenHandle[] = [];
 
@@ -280,7 +280,8 @@ export function animateAdd(
       // the accent color too, not just the final circle.
       if (rendered.node.hasAttribute('data-current')) arcPath.setAttribute('data-current', '');
       setupDrawOn(arcPath);
-      container.replaceChild(arcPath, rendered.node);
+      const geometryParent = rendered.node.parentNode;
+      geometryParent?.replaceChild(arcPath, rendered.node);
 
       handles.push(
         runTween({
@@ -290,7 +291,7 @@ export function animateAdd(
           },
           onDone: () => {
             // Swap back to the crisp <circle> node for final rendering.
-            container.replaceChild(rendered.node, arcPath);
+            arcPath.parentNode?.replaceChild(rendered.node, arcPath);
           },
         })
       );
@@ -313,9 +314,7 @@ export function animateAdd(
   }
 
   if (rendered.label) {
-    const label = rendered.label;
-    container.appendChild(label);
-    handles.push(fadeInTween(label, LABEL_FADE_DURATION_MS));
+    handles.push(fadeInTween(rendered.label, LABEL_FADE_DURATION_MS));
   }
 
   return runTweenGroup(handles);

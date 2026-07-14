@@ -92,17 +92,31 @@ function midOf(a: Point, b: Point): Point {
 
 function angleMarkPath(shape: AngleMarkShape): string {
   // Small arc between the two direction vectors from the vertex, at a
-  // fixed radius, purely for a visual angle wedge indicator.
+  // fixed radius, purely for a visual angle wedge indicator. The arc's
+  // centre must be the (y-flipped) vertex — SVG's endpoint-arc syntax
+  // recovers a centre from the flags, and a hardcoded sweep always picks
+  // one of two candidate centres, which can put the bulge on the wrong
+  // side of the angle (a "concave" mark). Compute sweep from the SVG-
+  // space central angle so the intended centre is selected. Always the
+  // minor arc (|Δ| ≤ π) — reflex angles are not supported.
   const radius = LABEL_OFFSET * 1.4;
   const v = shape.vertex;
   const dirFrom = normalizeDir(shape.from, v);
   const dirTo = normalizeDir(shape.to, v);
   const start = { x: v.x + dirFrom.x * radius, y: v.y + dirFrom.y * radius };
   const end = { x: v.x + dirTo.x * radius, y: v.y + dirTo.y * radius };
+  const centerSvg = toSvgPoint(v);
   const startSvg = toSvgPoint(start);
   const endSvg = toSvgPoint(end);
-  // Small-angle assumption: always draw the minor arc.
-  return `M ${startSvg.x} ${startSvg.y} A ${radius} ${radius} 0 0 0 ${endSvg.x} ${endSvg.y}`;
+  const a0 = Math.atan2(startSvg.y - centerSvg.y, startSvg.x - centerSvg.x);
+  const a1 = Math.atan2(endSvg.y - centerSvg.y, endSvg.x - centerSvg.x);
+  let delta = a1 - a0;
+  if (delta > Math.PI) delta -= 2 * Math.PI;
+  if (delta < -Math.PI) delta += 2 * Math.PI;
+  // In SVG's y-down atan2, a positive delta is clockwise — which is
+  // sweep-flag 1. Zero delta is degenerate; either flag is fine.
+  const sweep = delta >= 0 ? 1 : 0;
+  return `M ${startSvg.x} ${startSvg.y} A ${radius} ${radius} 0 0 ${sweep} ${endSvg.x} ${endSvg.y}`;
 }
 
 function normalizeDir(p: Point, from: Point): Point {
@@ -217,18 +231,50 @@ function labelAnchor(shape: Shape): Point {
 }
 
 /** Render a full scene into a fresh <g> element, statically (no animation).
- * This is the function step-back / seek / prefers-reduced-motion use. */
+ * This is the function step-back / seek / prefers-reduced-motion use.
+ * Geometry is painted first, then every label, so labels always sit above
+ * strokes regardless of construction order. */
 export function renderScene(scene: Scene): SVGGElement {
   const g = el('g');
   g.setAttribute('class', 'euclid-scene');
+  const geometry = el('g');
+  geometry.setAttribute('class', 'euclid-geometry');
+  const labels = el('g');
+  labels.setAttribute('class', 'euclid-labels');
   for (const id of scene.order) {
     const shape = scene.shapes.get(id);
     if (!shape) continue;
     const rendered = renderShape(shape);
-    g.appendChild(rendered.node);
-    if (rendered.label) g.appendChild(rendered.label);
+    geometry.appendChild(rendered.node);
+    if (rendered.label) labels.appendChild(rendered.label);
   }
+  g.appendChild(geometry);
+  g.appendChild(labels);
   return g;
+}
+
+/** Append a rendered shape's geometry (and label) so labels stay in a
+ * trailing `.euclid-labels` group above all strokes. Used by animated
+ * step-forward, which paints directly into the stage SVG. */
+export function appendRenderedShape(container: SVGElement, rendered: RenderedShape): void {
+  let geometry = container.querySelector(':scope > .euclid-geometry') as SVGGElement | null;
+  let labels = container.querySelector(':scope > .euclid-labels') as SVGGElement | null;
+  if (!geometry) {
+    geometry = el('g');
+    geometry.setAttribute('class', 'euclid-geometry');
+    container.appendChild(geometry);
+  }
+  if (!labels) {
+    labels = el('g');
+    labels.setAttribute('class', 'euclid-labels');
+    container.appendChild(labels);
+  }
+  geometry.appendChild(rendered.node);
+  if (rendered.label) labels.appendChild(rendered.label);
+  // Keep the labels group last among direct children so it stays on top
+  // even if other nodes (e.g. temporary circle-sweep paths) were appended
+  // after it earlier.
+  container.appendChild(labels);
 }
 
 /** Create the root <svg> element for a proposition's stage with the

@@ -80,6 +80,14 @@ function includeScene(b: Bounds, scene: Scene): void {
 const MIN_PADDING = 0.28;
 /** Padding as a fraction of the scene's larger dimension. */
 const PADDING_RATIO = 0.04;
+/**
+ * Floor on the framed extent (larger of width/height after padding). Stroke
+ * widths and label sizes are in plane units, so a tiny diagram would otherwise
+ * fill the stage and look thick/heavy next to props whose frame spans several
+ * units. Expanding small frames with empty margin caps the on-screen scale.
+ * Tuned to the equilateral-with-circles construction order of magnitude.
+ */
+const MIN_VIEW_EXTENT = 5.5;
 
 function toViewBox(b: Bounds): ViewBox {
   if (!Number.isFinite(b.minX)) {
@@ -88,12 +96,20 @@ function toViewBox(b: Bounds): ViewBox {
   const width = Math.max(b.maxX - b.minX, 1e-6);
   const height = Math.max(b.maxY - b.minY, 1e-6);
   const pad = Math.max(MIN_PADDING, PADDING_RATIO * Math.max(width, height));
-  return {
-    x: b.minX - pad,
-    y: b.minY - pad,
-    width: width + 2 * pad,
-    height: height + 2 * pad,
-  };
+  let x = b.minX - pad;
+  let y = b.minY - pad;
+  let w = width + 2 * pad;
+  let h = height + 2 * pad;
+  const extent = Math.max(w, h);
+  if (extent < MIN_VIEW_EXTENT) {
+    const extraW = MIN_VIEW_EXTENT - w;
+    const extraH = MIN_VIEW_EXTENT - h;
+    x -= extraW / 2;
+    y -= extraH / 2;
+    w = MIN_VIEW_EXTENT;
+    h = MIN_VIEW_EXTENT;
+  }
+  return { x, y, width: w, height: h };
 }
 
 /**

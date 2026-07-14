@@ -12,7 +12,7 @@ import { stateAt } from '../kernel/evaluate';
 import type { Scene, Shape } from '../kernel/types';
 import type { Proposition } from '../format/schema';
 import { animateAdd, animateRestyle, applyStaticStyle, prefersReducedMotion } from '../render/animate';
-import { renderShape, renderScene, type RenderedShape } from '../render/svg';
+import { appendRenderedShape, renderShape, type RenderedShape } from '../render/svg';
 
 export type PlayState = 'paused' | 'playing';
 
@@ -121,18 +121,13 @@ export class Timeline {
   /** Paint `scene` onto a wiped stage and rebuild the id → node index. */
   private paintScene(scene: Scene): void {
     this.clearStage();
-    const g = renderScene(scene);
-    // Re-index rendered nodes into stageEntries by walking the scene again
-    // (renderScene doesn't hand back the per-id map, so rebuild it here to
-    // keep svg.ts's static path independent/simple).
     for (const id of scene.order) {
       const shape = scene.shapes.get(id);
       if (!shape) continue;
-      const node = g.querySelector(`[data-id="${cssEscape(id)}"]`) as SVGElement | null;
-      const label = g.querySelector(`[data-id="${cssEscape(id)}__label"]`) as SVGTextElement | null;
-      if (node) this.stageEntries.set(id, { node, label });
+      const rendered = renderShape(shape);
+      appendRenderedShape(this.container, rendered);
+      this.stageEntries.set(id, { node: rendered.node, label: rendered.label });
     }
-    this.container.appendChild(g);
   }
 
   /** Wipe the stage and statically render `stateAt(k)`. Used for restart,
@@ -369,11 +364,6 @@ function beat(ms: number, interrupted: () => boolean): Promise<void> {
     }
     requestAnimationFrame(tick);
   });
-}
-
-function cssEscape(id: string): string {
-  if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(id);
-  return id.replace(/[^a-zA-Z0-9_-]/g, '\\$&');
 }
 
 // applyStaticStyle / prefersReducedMotion are re-exported for potential
