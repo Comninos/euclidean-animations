@@ -44,8 +44,7 @@
         { "op": "ray", "id": "PC", "origin": "P", "through": "C" }
       ],
       "set": [
-        { "targets": ["cAC1", "cAC2"], "role": "hidden" },
-        { "targets": ["PA", "PC"], "role": "construction" }
+        { "targets": ["cAC1", "cAC2"], "role": "hidden" }
       ]
     },
     {
@@ -56,7 +55,7 @@
         { "op": "intersect", "id": "G", "of": ["cCD", "PC"], "pick": 1, "label": "G" }
       ],
       "set": [
-        { "targets": ["cCD"], "role": "construction" }
+        { "targets": ["PA", "PC"], "role": "construction" }
       ]
     },
     {
@@ -67,7 +66,7 @@
         { "op": "intersect", "id": "L", "of": ["cPG", "PA"], "pick": 1, "label": "L" }
       ],
       "set": [
-        { "targets": ["cPG"], "role": "construction" }
+        { "targets": ["cCD"], "role": "construction" }
       ]
     },
     {
@@ -78,7 +77,7 @@
         { "op": "intersect", "id": "E", "of": ["cAL", "AB"], "pick": 1, "label": "E" }
       ],
       "set": [
-        { "targets": ["cAL"], "role": "construction" }
+        { "targets": ["cPG"], "role": "construction" }
       ]
     },
     {
@@ -86,6 +85,9 @@
       "text": "Then AE shall be equal to CD.",
       "add": [
         { "op": "segment", "id": "AE", "from": "A", "to": "E" }
+      ],
+      "set": [
+        { "targets": ["cAL"], "role": "construction" }
       ]
     },
     {

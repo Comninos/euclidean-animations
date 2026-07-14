@@ -64,14 +64,14 @@
       "add": [
         { "op": "segment", "id": "DF", "from": "D", "to": "F" },
         { "op": "segment", "id": "EF", "from": "E", "to": "F" }
-      ],
-      "set": [
-        { "targets": ["DF", "EF"], "role": "construction" }
       ]
     },
     {
       "id": "qed",
       "text": "For AD = AE, DF = EF, and AF is common; therefore the angle DAF equals the angle EAF (Prop. I.8). Wherefore the angle BAC is bisected by the straight line AF, as was required.",
+      "set": [
+        { "targets": ["DF", "EF"], "role": "construction" }
+      ],
       "highlight": ["AF"]
     }
   ]
