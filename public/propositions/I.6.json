@@ -1,0 +1,57 @@
+{
+  "id": "I.6",
+  "title": "If in a triangle two angles be equal to one another, the sides which subtend the equal angles will also be equal to one another.",
+  "given": {
+    "A": [0, 1.55],
+    "B": [-1.25, 0],
+    "C": [1.25, 0]
+  },
+  "steps": [
+    {
+      "id": "given-triangle",
+      "text": "Let ABC be a triangle having the angle ABC equal to the angle ACB.",
+      "add": [
+        { "op": "point", "id": "A", "label": "A" },
+        { "op": "point", "id": "B", "label": "B" },
+        { "op": "point", "id": "C", "label": "C" },
+        { "op": "segment", "id": "AB", "from": "A", "to": "B" },
+        { "op": "segment", "id": "AC", "from": "A", "to": "C" },
+        { "op": "segment", "id": "BC", "from": "B", "to": "C" },
+        { "op": "angleMark", "id": "angABC", "vertex": "B", "from": "A", "to": "C" },
+        { "op": "angleMark", "id": "angACB", "vertex": "C", "from": "A", "to": "B" }
+      ]
+    },
+    {
+      "id": "suppose-unequal",
+      "text": "For, if AB were unequal to AC, one of them would be greater. Suppose AB greater; from AB the greater let DB be cut off equal to AC the less (Prop. I.3).",
+      "add": [
+        { "op": "pointAtDistance", "id": "D", "origin": "B", "through": "A", "distance": 1.4, "label": "D" }
+      ]
+    },
+    {
+      "id": "join-DC",
+      "text": "Let DC be joined.",
+      "add": [
+        { "op": "segment", "id": "DC", "from": "D", "to": "C" },
+        { "op": "segment", "id": "DB", "from": "D", "to": "B" }
+      ]
+    },
+    {
+      "id": "sas-absurd",
+      "text": "Then, since DB would equal AC, and BC is common, and the angle DBC equals the angle ACB, triangle DBC would equal triangle ACB (Prop. I.4) — the less equals the greater: which is absurd.",
+      "add": [
+        { "op": "polygon", "id": "triDBC", "of": ["D", "B", "C"] },
+        { "op": "polygon", "id": "triACB", "of": ["A", "C", "B"] }
+      ],
+      "highlight": ["triDBC", "triACB", "DB", "AC", "BC"]
+    },
+    {
+      "id": "qed",
+      "text": "Therefore AB is not unequal to AC; it is therefore equal to it. Wherefore if in a triangle two angles be equal to one another, the sides which subtend the equal angles are equal to one another, as was required.",
+      "set": [
+        { "targets": ["D", "DC", "DB", "triDBC", "triACB"], "role": "hidden" }
+      ],
+      "highlight": ["AB", "AC", "angABC", "angACB"]
+    }
+  ]
+}

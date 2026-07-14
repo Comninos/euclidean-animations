@@ -1,0 +1,90 @@
+{
+  "id": "I.5",
+  "title": "In isosceles triangles the angles at the base are equal to one another, and, if the equal straight lines be produced further, the angles under the base will be equal to one another.",
+  "given": {
+    "A": [0, 1.6],
+    "B": [-1.2, 0],
+    "C": [1.2, 0]
+  },
+  "steps": [
+    {
+      "id": "given-triangle",
+      "text": "Let ABC be an isosceles triangle having the side AB equal to the side AC.",
+      "add": [
+        { "op": "point", "id": "A", "label": "A" },
+        { "op": "point", "id": "B", "label": "B" },
+        { "op": "point", "id": "C", "label": "C" },
+        { "op": "segment", "id": "AB", "from": "A", "to": "B" },
+        { "op": "segment", "id": "AC", "from": "A", "to": "C" },
+        { "op": "segment", "id": "BC", "from": "B", "to": "C" }
+      ]
+    },
+    {
+      "id": "produce-BD-CE",
+      "text": "Let the straight lines BD, CE be produced further in a straight line with AB, AC.",
+      "add": [
+        { "op": "extend", "id": "D", "from": "A", "through": "B", "distance": 2.8, "label": "D" },
+        { "op": "extend", "id": "E", "from": "A", "through": "C", "distance": 2.8, "label": "E" },
+        { "op": "segment", "id": "BD", "from": "B", "to": "D" },
+        { "op": "segment", "id": "CE", "from": "C", "to": "E" }
+      ]
+    },
+    {
+      "id": "take-F",
+      "text": "Let a point F be taken at random on BD.",
+      "add": [
+        { "op": "point", "id": "F", "at": [-1.44, -0.32], "label": "F" }
+      ]
+    },
+    {
+      "id": "cut-AG",
+      "text": "From AE the greater let AG be cut off equal to AF the less (Prop. I.3).",
+      "add": [
+        { "op": "pointAtDistance", "id": "G", "origin": "A", "through": "E", "distance": 2.4, "label": "G" }
+      ]
+    },
+    {
+      "id": "join-FC-GB",
+      "text": "Let the straight lines FC, GB be joined.",
+      "add": [
+        { "op": "segment", "id": "FC", "from": "F", "to": "C" },
+        { "op": "segment", "id": "GB", "from": "G", "to": "B" }
+      ]
+    },
+    {
+      "id": "sas-outer",
+      "text": "Since AF equals AG and AB equals AC, and they contain the common angle FAG, therefore FC equals GB, and triangle AFC equals triangle AGB (Prop. I.4).",
+      "add": [
+        { "op": "segment", "id": "AF", "from": "A", "to": "F" },
+        { "op": "segment", "id": "AG", "from": "A", "to": "G" }
+      ],
+      "highlight": ["AF", "AG", "FC", "GB"]
+    },
+    {
+      "id": "sas-lower",
+      "text": "And, since AF equals AG and AB equals AC, the remainder BF equals the remainder CG; and FC equals GB; therefore triangle BFC equals triangle CGB (Prop. I.4).",
+      "set": [
+        { "targets": ["AF", "AG"], "role": "construction" }
+      ],
+      "highlight": ["FC", "GB", "BC"]
+    },
+    {
+      "id": "base-angles",
+      "text": "Therefore the angle ABC equals the angle ACB, and they are at the base of the triangle ABC; and the angle FBC equals the angle GCB, and they are under the base.",
+      "add": [
+        { "op": "angleMark", "id": "angABC", "vertex": "B", "from": "A", "to": "C" },
+        { "op": "angleMark", "id": "angACB", "vertex": "C", "from": "A", "to": "B" },
+        { "op": "angleMark", "id": "angFBC", "vertex": "B", "from": "F", "to": "C" },
+        { "op": "angleMark", "id": "angGCB", "vertex": "C", "from": "G", "to": "B" }
+      ],
+      "set": [
+        { "targets": ["FC", "GB", "BD", "CE", "D", "E", "F", "G"], "role": "construction" }
+      ]
+    },
+    {
+      "id": "qed",
+      "text": "Wherefore in isosceles triangles the angles at the base are equal to one another, and the angles under the base are equal to one another, as was required.",
+      "highlight": ["angABC", "angACB", "angFBC", "angGCB", "AB", "AC"]
+    }
+  ]
+}

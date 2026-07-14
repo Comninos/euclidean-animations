@@ -1,0 +1,61 @@
+{
+  "id": "I.4",
+  "title": "If two triangles have the two sides equal to two sides respectively, and have the angles contained by the equal straight lines equal, they will also have the base equal to the base, the triangle equal to the triangle, and the remaining angles equal to the remaining angles respectively.",
+  "given": {
+    "A": [0, 0],
+    "B": [1.55, 0],
+    "C": [0.45, 1.35],
+    "D": [2.7, 0],
+    "E": [4.25, 0],
+    "F": [3.15, 1.35]
+  },
+  "steps": [
+    {
+      "id": "given-triangles",
+      "text": "Let ABC, DEF be two triangles having the two sides AB, AC equal to the two sides DE, DF respectively, namely AB to DE and AC to DF, and the angle BAC equal to the angle EDF.",
+      "add": [
+        { "op": "point", "id": "A", "label": "A" },
+        { "op": "point", "id": "B", "label": "B" },
+        { "op": "point", "id": "C", "label": "C" },
+        { "op": "point", "id": "D", "label": "D" },
+        { "op": "point", "id": "E", "label": "E" },
+        { "op": "point", "id": "F", "label": "F" },
+        { "op": "segment", "id": "AB", "from": "A", "to": "B" },
+        { "op": "segment", "id": "AC", "from": "A", "to": "C" },
+        { "op": "segment", "id": "BC", "from": "B", "to": "C" },
+        { "op": "segment", "id": "DE", "from": "D", "to": "E" },
+        { "op": "segment", "id": "DF", "from": "D", "to": "F" },
+        { "op": "segment", "id": "EF", "from": "E", "to": "F" },
+        { "op": "angleMark", "id": "angBAC", "vertex": "A", "from": "B", "to": "C" },
+        { "op": "angleMark", "id": "angEDF", "vertex": "D", "from": "E", "to": "F" }
+      ]
+    },
+    {
+      "id": "equal-sides-AB-DE",
+      "text": "For AB equals DE, and AC equals DF.",
+      "highlight": ["AB", "DE", "AC", "DF"]
+    },
+    {
+      "id": "equal-included-angles",
+      "text": "And the angle BAC equals the angle EDF.",
+      "highlight": ["angBAC", "angEDF"]
+    },
+    {
+      "id": "mark-remaining",
+      "text": "Therefore the base BC is also equal to the base EF, the triangle ABC equal to the triangle DEF, and the remaining angles equal to the remaining angles respectively, namely those which the equal sides subtend.",
+      "add": [
+        { "op": "angleMark", "id": "angABC", "vertex": "B", "from": "A", "to": "C" },
+        { "op": "angleMark", "id": "angACB", "vertex": "C", "from": "A", "to": "B" },
+        { "op": "angleMark", "id": "angDEF", "vertex": "E", "from": "D", "to": "F" },
+        { "op": "angleMark", "id": "angDFE", "vertex": "F", "from": "D", "to": "E" },
+        { "op": "polygon", "id": "triABC", "of": ["A", "B", "C"] },
+        { "op": "polygon", "id": "triDEF", "of": ["D", "E", "F"] }
+      ]
+    },
+    {
+      "id": "qed",
+      "text": "Wherefore BC equals EF, triangle ABC equals triangle DEF, angle ABC equals angle DEF, and angle ACB equals angle DFE, as was required.",
+      "highlight": ["BC", "EF", "triABC", "triDEF", "angABC", "angDEF", "angACB", "angDFE"]
+    }
+  ]
+}
