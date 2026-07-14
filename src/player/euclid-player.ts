@@ -409,11 +409,11 @@ export class EuclidPlayerElement extends HTMLElement {
 
     if (this.hasAttribute('autoplay')) {
       void this.timeline.play();
-    } else {
-      // Show the completed figure on load — a blank stage tells the reader
-      // nothing. Pressing play replays the construction from the start.
-      this.timeline.goTo(prop.steps.length);
     }
+    // Otherwise stay at step 0. The timeline's step-0 static render shows
+    // the completed figure (so a reader who never touches the controls
+    // still sees the theorem) while leaving the caption empty and
+    // step-forward enabled — unlike landing on the final step index.
   }
 
   /** Reserve stable space in .caption for the tallest caption text across

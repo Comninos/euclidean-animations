@@ -108,16 +108,19 @@ export class Timeline {
     this.playToken++; // invalidate any in-flight play() loop
   }
 
-  /** Wipe the stage and statically render `stateAt(k)`. Used for restart,
-   * step-back, seeking, and as the guaranteed-clean landing state after any
-   * cancellation. */
-  private renderStatic(k: number): void {
-    this.cancelActive();
-    const scene = stateAt(this.prop, k);
+  /** Clear every SVG node from the stage without changing the step index.
+   * Used to wipe the completed-figure preview at step 0 before the first
+   * construction step animates onto an empty stage. */
+  private clearStage(): void {
     while (this.container.firstChild) {
       this.container.removeChild(this.container.firstChild);
     }
     this.stageEntries.clear();
+  }
+
+  /** Paint `scene` onto a wiped stage and rebuild the id → node index. */
+  private paintScene(scene: Scene): void {
+    this.clearStage();
     const g = renderScene(scene);
     // Re-index rendered nodes into stageEntries by walking the scene again
     // (renderScene doesn't hand back the per-id map, so rebuild it here to
@@ -130,8 +133,35 @@ export class Timeline {
       if (node) this.stageEntries.set(id, { node, label });
     }
     this.container.appendChild(g);
+  }
+
+  /** Wipe the stage and statically render `stateAt(k)`. Used for restart,
+   * step-back, seeking, and as the guaranteed-clean landing state after any
+   * cancellation.
+   *
+   * Step 0 is special: the true empty scene tells a reader nothing, so we
+   * show the completed figure instead — while remaining at step index 0 so
+   * the caption stays blank and step-forward still reaches step 1. Leaving
+   * step 0 forward clears this preview before animating (see stepForward). */
+  private renderStatic(k: number): void {
+    this.cancelActive();
+    const scene = k === 0 ? stateAt(this.prop, this.totalSteps) : stateAt(this.prop, k);
+    this.paintScene(scene);
     this.markCurrentStep(this.currentStepIds(k));
     this.step = k;
+    this.playState = 'paused';
+    this.events.onStepChange?.(this.step, this.totalSteps);
+    this.events.onPlayStateChange?.(this.playState);
+  }
+
+  /** Land on step 0 with a truly empty stage (no completed-figure preview).
+   * Used when replaying from the end so play doesn't flash the final figure
+   * before the construction starts. */
+  private renderEmptyStart(): void {
+    this.cancelActive();
+    this.paintScene(stateAt(this.prop, 0));
+    this.markCurrentStep([]);
+    this.step = 0;
     this.playState = 'paused';
     this.events.onStepChange?.(this.step, this.totalSteps);
     this.events.onPlayStateChange?.(this.playState);
@@ -192,6 +222,12 @@ export class Timeline {
     }
 
     if (this.isAtEnd) return;
+
+    // Step 0 displays the completed figure as a preview. Wipe it so the
+    // first construction step animates onto the true empty stateAt(0).
+    if (this.step === 0) {
+      this.clearStage();
+    }
 
     const targetStep = this.step + 1;
     this.animatingTarget = targetStep;
@@ -276,11 +312,10 @@ export class Timeline {
    * reached or pause()/goTo()/stepBackward() interrupts. */
   async play(): Promise<void> {
     if (this.playState === 'playing') return;
-    // Playing from the end replays from the start — this is also the
-    // normal activation path, since the player mounts showing the
-    // completed figure.
+    // Playing from the end replays from an empty step 0 (not the
+    // completed-figure preview) so the construction starts cleanly.
     if (this.isAtEnd) {
-      this.renderStatic(0);
+      this.renderEmptyStart();
     }
     this.playState = 'playing';
     this.events.onPlayStateChange?.(this.playState);
