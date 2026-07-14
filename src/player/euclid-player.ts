@@ -13,6 +13,22 @@ import { computePropositionViewBox } from '../kernel/bounds';
 import { createStageSvg } from '../render/svg';
 import { DARK_PALETTE, LABEL_FONT_FAMILY, LIGHT_PALETTE, paletteCssDeclarations } from '../render/style';
 
+/** Inline stroke icons on a shared 24px grid, so every control glyph has
+ * identical visual weight and height (the Unicode media glyphs the player
+ * previously used render at wildly different sizes per font). They draw
+ * with currentColor, so the grey/accent-hover CSS applies unchanged. */
+function icon(paths: string): string {
+  return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+}
+
+const ICONS = {
+  restart: icon('<path d="M7 5v14"/><path d="M17 5l-8 7 8 7"/>'),
+  back: icon('<path d="M14 6l-6 6 6 6"/>'),
+  forward: icon('<path d="M10 6l6 6-6 6"/>'),
+  play: icon('<path d="M8 5.5l11 6.5-11 6.5z"/>'),
+  pause: icon('<path d="M9 5.5v13"/><path d="M15 5.5v13"/>'),
+} as const;
+
 const TEMPLATE = `
 <style>
   :host {
@@ -101,7 +117,7 @@ const TEMPLATE = `
   .transport {
     display: flex;
     align-items: center;
-    gap: 0.4em;
+    gap: 0;
     justify-self: start;
   }
   button.ctrl {
@@ -109,14 +125,14 @@ const TEMPLATE = `
     border: none;
     background: transparent;
     color: var(--euclid-control);
-    width: 1.9em;
-    height: 1.9em;
-    font-size: 1.25rem;
-    line-height: 1;
+    width: 32px;
+    height: 32px;
+    padding: 0;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    transition: color 120ms ease;
   }
   button.ctrl:hover:not(:disabled) {
     color: var(--euclid-accent);
@@ -129,11 +145,10 @@ const TEMPLATE = `
     color: var(--euclid-control);
   }
   button.ctrl:focus-visible {
-    outline: none;
     color: var(--euclid-accent);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 0.3em;
+    outline: 1px solid var(--euclid-control);
+    outline-offset: 1px;
+    border-radius: 4px;
   }
   .dots {
     display: flex;
@@ -179,10 +194,10 @@ const TEMPLATE = `
 <div class="caption" part="caption"></div>
 <div class="controls" part="controls">
   <div class="transport" part="transport">
-    <button class="ctrl" data-action="restart" title="Restart" aria-label="Restart">&#9198;</button>
-    <button class="ctrl" data-action="back" title="Step back" aria-label="Step back">&#8249;</button>
-    <button class="ctrl" data-action="play" title="Play/Pause" aria-label="Play or pause">&#9654;</button>
-    <button class="ctrl" data-action="forward" title="Step forward" aria-label="Step forward">&#8250;</button>
+    <button class="ctrl" data-action="restart" title="Restart" aria-label="Restart">${ICONS.restart}</button>
+    <button class="ctrl" data-action="back" title="Step back" aria-label="Step back">${ICONS.back}</button>
+    <button class="ctrl" data-action="play" title="Play/Pause" aria-label="Play or pause">${ICONS.play}</button>
+    <button class="ctrl" data-action="forward" title="Step forward" aria-label="Step forward">${ICONS.forward}</button>
   </div>
   <div class="dots" part="dots"></div>
 </div>
@@ -367,10 +382,11 @@ export class EuclidPlayerElement extends HTMLElement {
     const svg = createStageSvg(view);
     this.stageWrap.appendChild(svg);
 
-    // The stage box is never taller than it is wide: tall geometry
-    // letterboxes inside a square box instead of stretching the player
-    // (and, via the euclid-size report, the embedding iframe) vertically.
-    const aspect = Math.max(1, view.width / view.height);
+    // The stage box is never taller than 4 units per 5 of width (5:4):
+    // tall geometry letterboxes inside the capped box instead of
+    // stretching the player (and, via the euclid-size report, the
+    // embedding iframe) vertically.
+    const aspect = Math.max(5 / 4, view.width / view.height);
     this.style.setProperty('--euclid-aspect', String(aspect));
 
     if (prop.title) {
@@ -502,7 +518,7 @@ export class EuclidPlayerElement extends HTMLElement {
   }
 
   private onPlayStateChange(state: 'paused' | 'playing'): void {
-    this.playBtn.innerHTML = state === 'playing' ? '&#10074;&#10074;' : '&#9654;';
+    this.playBtn.innerHTML = state === 'playing' ? ICONS.pause : ICONS.play;
     this.playBtn.setAttribute('aria-label', state === 'playing' ? 'Pause' : 'Play');
     // Play is never disabled: at the end it replays from the start.
   }
