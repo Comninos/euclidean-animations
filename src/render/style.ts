@@ -76,9 +76,11 @@ export const STROKE_VECTOR_EFFECT = 'non-scaling-stroke';
 export const POINT_RADIUS = 0.035;
 
 export const CONSTRUCTION_OPACITY = 0.45;
-/** Dash lengths in plane units (still scale with the figure; only stroke
- * weight is non-scaling). */
-export const CONSTRUCTION_DASH = '0.09 0.07';
+/** Dash pattern for construction strokes, in CSS pixels. Geometry strokes
+ * use `vector-effect: non-scaling-stroke`, which measures the dash array in
+ * viewport space too — so this must be sized in pixels (a plane-unit value
+ * would render as sub-pixel dashes and read as a solid line). */
+export const CONSTRUCTION_DASH = '9 7';
 
 export const LABEL_FONT_FAMILY = "'Georgia', 'Times New Roman', serif";
 export const LABEL_FONT_STYLE = 'italic';
@@ -86,8 +88,8 @@ export const LABEL_FONT_SIZE = 0.16; // plane units; scaled with the rest of the
 export const LABEL_OFFSET = 0.13; // distance labels sit away from their anchor point
 /** Paper-colored halo behind label glyphs so letters stay readable over ink.
  * In CSS pixels — applied with `vector-effect: non-scaling-stroke`, so it is
- * a constant hairline (1px) at every figure scale, not a scaling outline. */
-export const LABEL_HALO_WIDTH = 1;
+ * a constant width at every figure scale, not a scaling outline. */
+export const LABEL_HALO_WIDTH = 3;
 
 export interface ResolvedStyle {
   readonly stroke: string;

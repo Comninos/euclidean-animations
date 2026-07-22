@@ -243,7 +243,7 @@ A step (`ProposedStep` in `src/format/schema.ts`) has three independent verbs. A
 
 Array of ops from section 3. Each op both computes new geometry and introduces exactly one new id (except `point` referencing a `given` id, which reuses that id). Newly-added shapes are the step's "current" set by default (see `highlight` below) and animate in:
 
-- **segment / line / ray**: a stroke "draw-on" from start point to end point over ~650ms (`DEFAULT_DURATION_MS` in `src/render/animate.ts`), using an SVG `stroke-dasharray`/`stroke-dashoffset` reveal.
+- **segment / line / ray**: a stroke "draw-on" from start point to end point over ~650ms (`DEFAULT_DURATION_MS` in `src/render/animate.ts`), by growing the path geometry from its start point to its end point (geometry growth rather than a `stroke-dashoffset` reveal, because geometry strokes use `vector-effect: non-scaling-stroke`, under which dash-based reveals do not work).
 - **circle**: a **compass arc-sweep starting at the `through` point**, drawn clockwise all the way around back to `through`, over ~800ms (`DEFAULT_DURATION_MS + 150`). This is why `through` matters beyond just determining the radius — it's the point the animated compass "pivots from" visually, matching how you'd actually hold a compass at that point. Pick `through` to be the point Euclid's text names as the radius ("with centre A, radius AB" → `through: "B"`).
 - **point** (including `intersect`/`midpoint`/`extend`/`pointAtDistance`/`footOfPerpendicular` results, which are all rendered as `point` shapes under the hood): a plain opacity fade-in, ~320ms. **polygon** / **angleMark**: a plain opacity fade-in, ~420ms.
 - Any **label** on a shape fades in on its own ~420ms tween alongside the shape's own animation.
@@ -261,7 +261,7 @@ Fields: `targets: string[]` (ids of *already-added* shapes — from this step or
 Effects of `role`:
 
 - `"normal"` — full-strength ink, solid line, default state.
-- `"construction"` — thin (stroke width 0.013 vs 0.024 plane units), dashed (`0.09 0.07` dash pattern), and faded to 45% opacity (`CONSTRUCTION_OPACITY` in `src/render/style.ts`). This is the "grey scaffolding" look for sub-constructions that have served their purpose but you still want faintly visible for reference.
+- `"construction"` — thin (stroke width 1.15px vs 2px; geometry strokes are pixel-width and constant across figure scales via `vector-effect: non-scaling-stroke`), dashed (`9 7` pixel dash pattern), and faded to 45% opacity (`CONSTRUCTION_OPACITY` in `src/render/style.ts`). This is the "grey scaffolding" look for sub-constructions that have served their purpose but you still want faintly visible for reference.
 - `"hidden"` — opacity 0 (fully invisible). Note on framing: the proposition frame is the union of every step's *visible* geometry (`computePropositionViewBox` in `src/kernel/bounds.ts`), so a shape contributes to the frame for the steps in which it is visible and stops contributing only for steps where it is hidden — hiding declutters the figure but does not shrink the frame retroactively (the scaffolding must fit on stage while it is drawn). The shape's id stays fully valid to reference afterward (e.g. you can still `intersect` against a hidden circle, or `set` it back to `"normal"` later — un-hiding crossfades it back in). See section 5 for when to hide vs demote to construction.
 
 A restyle transition (any `set` that actually changes `role` or `color` relative to the shape's previous state) animates as a ~450ms crossfade (`RESTYLE_DURATION_MS`) of stroke color/width/opacity and dash pattern, computed by `animateRestyle` in `src/render/animate.ts`; `set`ting a property to the value it already has is a no-op (no shapes with unchanged role/color are included in the transition — see `changedRoleIds` in `src/player/timeline.ts`).
@@ -399,8 +399,8 @@ Every op also accepts optional `id` (required in practice — see section 2), `l
 
 | role | stroke | dash | opacity | counted in auto-frame? |
 |---|---|---|---|---|
-| `normal` | full width (0.024) | solid | 100% | yes |
-| `construction` | thin (0.013) | dashed (`0.09 0.07`) | 45% | yes |
+| `normal` | full width (2px) | solid | 100% | yes |
+| `construction` | thin (1.15px) | dashed (`9 7` px) | 45% | yes |
 | `hidden` | n/a (opacity 0) | n/a | 0% | only for steps where it is still visible (frame = union over all steps) |
 
 ### Colors (`ColorName`)
