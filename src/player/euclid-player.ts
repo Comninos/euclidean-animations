@@ -89,7 +89,8 @@ const TEMPLATE = `
   text.euclid-label {
     fill: var(--euclid-black);
     stroke: var(--euclid-background);
-    stroke-width: 0.06;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
     paint-order: stroke fill;
     user-select: none;
     pointer-events: none;

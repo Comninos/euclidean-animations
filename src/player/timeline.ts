@@ -12,7 +12,7 @@ import { stateAt } from '../kernel/evaluate';
 import type { Scene, Shape } from '../kernel/types';
 import type { Proposition } from '../format/schema';
 import { animateAdd, animateRestyle, applyStaticStyle, prefersReducedMotion } from '../render/animate';
-import { appendRenderedShape, renderShape, repositionLabels, type RenderedShape } from '../render/svg';
+import { appendRenderedShape, renderShape, type RenderedShape } from '../render/svg';
 
 export type PlayState = 'paused' | 'playing';
 
@@ -53,6 +53,12 @@ export class Timeline {
 
   private stageEntries = new Map<string, StageEntry>();
 
+  /** The fully-constructed scene, used only for label placement. Labels are
+   * positioned against the *final* figure so a letter never jumps as later
+   * steps add edges/marks around its point — its slot is chosen once, up
+   * front, and stays put for the whole construction. */
+  private readonly labelScene: Scene;
+
   /** While a forward transition is in flight, this holds the step index
    * being animated *to* (this.step is still the pre-transition step until
    * it commits). Used so back/goTo/restart during an in-flight animation
@@ -64,6 +70,7 @@ export class Timeline {
     this.prop = prop;
     this.container = container;
     this.events = events;
+    this.labelScene = stateAt(prop, prop.steps.length);
     this.renderStatic(0);
   }
 
@@ -124,7 +131,7 @@ export class Timeline {
     for (const id of scene.order) {
       const shape = scene.shapes.get(id);
       if (!shape) continue;
-      const rendered = renderShape(shape, scene);
+      const rendered = renderShape(shape, this.labelScene);
       appendRenderedShape(this.container, rendered);
       this.stageEntries.set(id, { node: rendered.node, label: rendered.label });
     }
@@ -251,13 +258,12 @@ export class Timeline {
     // before animateAdd so the circle sweep's temporary arc path can
     // inherit it.
     this.markCurrentStep([...new Set([...addedIds, ...highlightIds])]);
-    // Let already-on-stage labels react to edges / marks introduced this step
-    // before the new geometry animates in (avoids letters sitting on new strokes).
-    repositionLabels(this.stageEntries, nextScene);
     for (const id of addedIds) {
       const shape = nextScene.shapes.get(id);
       if (!shape) continue;
-      const rendered: RenderedShape = renderShape(shape, nextScene);
+      // Placed against the final figure (labelScene) so the letter lands in
+      // its permanent slot immediately and never shifts on later steps.
+      const rendered: RenderedShape = renderShape(shape, this.labelScene);
       rendered.node.setAttribute('data-current', '');
       rendered.label?.setAttribute('data-current', '');
       const handle = animateAdd(this.container, shape, rendered);

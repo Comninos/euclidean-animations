@@ -78,6 +78,7 @@ function createLabel(placement: LabelPlacement, text: string): SVGTextElement {
     fill: resolveFillOrStroke('black'),
     stroke: 'var(--euclid-background)',
     'stroke-width': LABEL_HALO_WIDTH,
+    'vector-effect': STROKE_VECTOR_EFFECT,
     'paint-order': 'stroke fill',
     'text-anchor': 'middle',
     'dominant-baseline': 'central',
@@ -85,15 +86,6 @@ function createLabel(placement: LabelPlacement, text: string): SVGTextElement {
   });
   label.textContent = text;
   return label;
-}
-
-/** Move an existing label element to a freshly computed placement. */
-export function applyLabelPlacement(label: SVGTextElement, placement: LabelPlacement): void {
-  const svgP = toSvgPoint(placement.position);
-  label.setAttribute('x', String(svgP.x));
-  label.setAttribute('y', String(svgP.y));
-  label.setAttribute('text-anchor', 'middle');
-  label.setAttribute('dominant-baseline', 'central');
 }
 
 /** Result of rendering one shape: the primary geometry node plus an
@@ -219,21 +211,6 @@ export function renderShape(shape: Shape, scene?: Scene): RenderedShape {
   }
 
   return { id: shape.id, node, label };
-}
-
-/** Recompute and apply label positions for every labeled shape already on
- * stage. Used after a step lands so earlier letters can react to newly
- * added edges / angle marks. */
-export function repositionLabels(
-  entries: ReadonlyMap<string, { label: SVGTextElement | null }>,
-  scene: Scene
-): void {
-  for (const [id, entry] of entries) {
-    if (!entry.label) continue;
-    const shape = scene.shapes.get(id);
-    if (!shape?.label) continue;
-    applyLabelPlacement(entry.label, placeLabel(shape, scene));
-  }
 }
 
 /** Render a full scene into a fresh <g> element, statically (no animation).

@@ -9,7 +9,7 @@
 //    step transition. The timeline (player/timeline.ts) is the only thing
 //    that sequences multiple tweens/steps together.
 
-import type { Scene, Shape } from '../kernel/types';
+import type { Point, Scene, Shape } from '../kernel/types';
 import {
   CONSTRUCTION_DASH,
   CONSTRUCTION_OPACITY,
@@ -200,12 +200,19 @@ function fadeInTween(node: SVGElement, durationMs: number): TweenHandle {
   });
 }
 
-/** Compute the SVG path/stroke length so stroke-dasharray draw-on can be
- * normalized to [0,1] via pathLength="1". */
-function setupDrawOn(node: SVGGeometryElement): void {
-  node.setAttribute('pathLength', '1');
-  node.style.strokeDasharray = '1';
-  node.style.strokeDashoffset = '1';
+/** The two plane-space endpoints of a straight stroke, in draw order
+ * (pen starts at `[0]`, travels to `[1]`). */
+function strokeEndpoints(shape: Shape): [Point, Point] {
+  switch (shape.kind) {
+    case 'segment':
+      return [shape.from, shape.to];
+    case 'line':
+      return [shape.a, shape.b];
+    case 'ray':
+      return [shape.origin, shape.through];
+    default:
+      throw new Error(`strokeEndpoints: ${shape.kind} is not a straight stroke`);
+  }
 }
 
 /**
@@ -233,18 +240,27 @@ export function animateAdd(
     case 'segment':
     case 'line':
     case 'ray': {
-      const path = rendered.node as unknown as SVGGeometryElement;
-      setupDrawOn(path);
+      // Draw the stroke gradually from its start point to its end point by
+      // growing the path geometry itself. (A stroke-dashoffset "draw-on" is
+      // incompatible with vector-effect: non-scaling-stroke — the browser
+      // computes dashes in viewport space and ignores pathLength, so the
+      // dash collapses and the line never sweeps.)
+      const path = rendered.node as SVGPathElement;
+      const [fromPt, toPt] = strokeEndpoints(shape);
+      const a = toSvgPoint(fromPt);
+      const b = toSvgPoint(toPt);
+      const fullD = `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+      path.setAttribute('d', `M ${a.x} ${a.y} L ${a.x} ${a.y}`);
       handles.push(
         runTween({
           durationMs: DEFAULT_DURATION_MS,
           onFrame: (t) => {
-            path.style.strokeDashoffset = String(1 - t);
+            const x = a.x + (b.x - a.x) * t;
+            const y = a.y + (b.y - a.y) * t;
+            path.setAttribute('d', `M ${a.x} ${a.y} L ${x} ${y}`);
           },
           onDone: () => {
-            path.style.strokeDasharray = style.strokeDasharray ?? '';
-            path.style.strokeDashoffset = '';
-            path.removeAttribute('pathLength');
+            path.setAttribute('d', fullD);
           },
         })
       );
@@ -252,9 +268,12 @@ export function animateAdd(
     }
     case 'circle': {
       // Arc-sweep starting at the `through` point, matching compass motion.
-      // We redraw the circle as a <path> arc from `through` around back to
-      // itself, using stroke-dashoffset draw-on (pathLength normalized),
-      // then swap to a plain <circle> element for a crisp final shape.
+      // We redraw the circle as a <path> arc that grows from the start point
+      // around the centre by a widening swept angle, then swap to a plain
+      // <circle> element for a crisp final shape. (Growing the arc geometry
+      // rather than animating stroke-dashoffset keeps the sweep working under
+      // vector-effect: non-scaling-stroke, which otherwise ignores pathLength
+      // and collapses dash-based draw-on.)
       const circleShape = shape;
       const startPoint = circleShape.through ?? {
         x: circleShape.center.x + circleShape.radius,
@@ -264,11 +283,11 @@ export function animateAdd(
       const c = toSvgPoint(circleShape.center);
       const s = toSvgPoint(startPoint);
       const r = circleShape.radius;
-      // Full circle via two 180-degree arcs starting and ending at s, sweep
-      // flag chosen for a clockwise sweep (matches compass motion visually).
-      const mid = { x: c.x - (s.x - c.x), y: c.y - (s.y - c.y) };
-      const d = `M ${s.x} ${s.y} A ${r} ${r} 0 1 1 ${mid.x} ${mid.y} A ${r} ${r} 0 1 1 ${s.x} ${s.y}`;
-      arcPath.setAttribute('d', d);
+      // Angle of the start point about the centre (SVG y-down space). The
+      // sweep advances in the positive-angle direction (sweep-flag 1), which
+      // reads as clockwise on screen — the compass motion.
+      const a0 = Math.atan2(s.y - c.y, s.x - c.x);
+      arcPath.setAttribute('d', `M ${s.x} ${s.y}`);
       arcPath.setAttribute('fill', 'none');
       arcPath.setAttribute('stroke', style.stroke);
       arcPath.setAttribute('stroke-width', String(style.strokeWidth));
@@ -281,7 +300,6 @@ export function animateAdd(
       // Inherit the current-step mark so the sweeping compass arc draws in
       // the accent color too, not just the final circle.
       if (rendered.node.hasAttribute('data-current')) arcPath.setAttribute('data-current', '');
-      setupDrawOn(arcPath);
       const geometryParent = rendered.node.parentNode;
       geometryParent?.replaceChild(arcPath, rendered.node);
 
@@ -289,7 +307,16 @@ export function animateAdd(
         runTween({
           durationMs: DEFAULT_DURATION_MS + 150,
           onFrame: (t) => {
-            arcPath.style.strokeDashoffset = String(1 - t);
+            // Cap just short of a full turn: a 2π arc has coincident
+            // endpoints and would render as nothing. The crisp <circle>
+            // takes over at onDone.
+            const theta = Math.min(t, 0.9999) * 2 * Math.PI;
+            const end = {
+              x: c.x + r * Math.cos(a0 + theta),
+              y: c.y + r * Math.sin(a0 + theta),
+            };
+            const largeArc = theta > Math.PI ? 1 : 0;
+            arcPath.setAttribute('d', `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`);
           },
           onDone: () => {
             // Swap back to the crisp <circle> node for final rendering.

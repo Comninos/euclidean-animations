@@ -98,7 +98,7 @@ Every `add` op shares optional base fields in addition to its own: `id` (require
 { "op": "point", "id": "B", "label": "B", "labelOffset": [0.2, -0.1] }
 ```
 
-When new edges appear on a later step, already-on-stage labels are repositioned to the new gap (`repositionLabels` in `src/render/svg.ts`, called from the timeline).
+Placement is computed once against the **final** figure (the timeline passes the fully-constructed scene as the label scene), so each letter takes its permanent slot the moment it appears and never shifts as later steps add edges or angle marks around its point.
 
 ### `point`
 

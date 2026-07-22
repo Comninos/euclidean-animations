@@ -84,8 +84,10 @@ export const LABEL_FONT_FAMILY = "'Georgia', 'Times New Roman', serif";
 export const LABEL_FONT_STYLE = 'italic';
 export const LABEL_FONT_SIZE = 0.16; // plane units; scaled with the rest of the drawing
 export const LABEL_OFFSET = 0.13; // distance labels sit away from their anchor point
-/** Paper-colored halo behind label glyphs so letters stay readable over ink. */
-export const LABEL_HALO_WIDTH = 0.06;
+/** Paper-colored halo behind label glyphs so letters stay readable over ink.
+ * In CSS pixels — applied with `vector-effect: non-scaling-stroke`, so it is
+ * a constant hairline (1px) at every figure scale, not a scaling outline. */
+export const LABEL_HALO_WIDTH = 1;
 
 export interface ResolvedStyle {
   readonly stroke: string;
