@@ -21,6 +21,7 @@ const KNOWN_ADD_OPS: readonly AddOpKind[] = [
 
 const KNOWN_COLORS = ['black', 'red', 'yellow', 'blue', 'construction'];
 const KNOWN_ROLES = ['normal', 'construction', 'hidden'];
+const KNOWN_LABEL_SIDES = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 
 export interface ValidationResult {
   readonly valid: boolean;
@@ -168,6 +169,24 @@ export function validateProposition(prop: unknown): ValidationResult {
       }
       if (op.color !== undefined && !KNOWN_COLORS.includes(op.color)) {
         errors.push(`${label}: op "${op.id}" has unknown color "${op.color}"`);
+      }
+      if (op.labelSide !== undefined && !KNOWN_LABEL_SIDES.includes(op.labelSide)) {
+        errors.push(
+          `${label}: op "${op.id}" has unknown labelSide "${String(op.labelSide)}" (expected N|NE|E|SE|S|SW|W|NW)`
+        );
+      }
+      if (op.labelOffset !== undefined) {
+        const off = op.labelOffset;
+        if (
+          !Array.isArray(off) ||
+          off.length !== 2 ||
+          typeof off[0] !== 'number' ||
+          typeof off[1] !== 'number' ||
+          !Number.isFinite(off[0]) ||
+          !Number.isFinite(off[1])
+        ) {
+          errors.push(`${label}: op "${op.id}" has invalid labelOffset (expected [dx, dy] finite numbers)`);
+        }
       }
       if (op.op === 'intersect' && op.pick !== 0 && op.pick !== 1) {
         errors.push(`${label}: intersect op "${op.id}" has invalid "pick" (must be 0 or 1)`);

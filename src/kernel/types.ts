@@ -17,11 +17,17 @@ export type ColorName = 'black' | 'red' | 'yellow' | 'blue' | 'construction';
 /** Visual "role" a shape can be demoted/promoted to via a `set` step. */
 export type ShapeRole = 'normal' | 'construction' | 'hidden';
 
+/** Compass side for an author-placed label (y-up plane). */
+export type LabelSide = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+
 interface ShapeBase {
   readonly id: string;
   readonly color: ColorName;
   readonly role: ShapeRole;
   readonly label?: string;
+  readonly labelSide?: LabelSide;
+  /** Explicit plane-space offset from the shape's label anchor (y-up). */
+  readonly labelOffset?: Point;
 }
 
 /** A resolved point shape: a labeled dot at a concrete location. */

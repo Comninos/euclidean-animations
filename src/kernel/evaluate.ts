@@ -15,6 +15,15 @@ import {
 import { GeometryError, type ColorName, type Point, type Scene, type Shape, type ShapeRole } from './types';
 import type { AddOp, ProposedStep, Proposition, SetOp } from '../format/schema';
 
+/** Optional label fields shared by every add op — spread onto the resolved shape. */
+function labelProps(op: AddOp): Pick<Shape, 'label' | 'labelSide' | 'labelOffset'> {
+  return {
+    ...(op.label !== undefined ? { label: op.label } : {}),
+    ...(op.labelSide !== undefined ? { labelSide: op.labelSide } : {}),
+    ...(op.labelOffset !== undefined ? { labelOffset: { x: op.labelOffset[0], y: op.labelOffset[1] } } : {}),
+  };
+}
+
 interface EvalState {
   /** Concrete point coordinates for every id that resolves to a point
    * (given points, `point` ops, and `intersect` ops). */
@@ -65,7 +74,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         at,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }
@@ -79,7 +88,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         to,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }
@@ -93,7 +102,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         b,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }
@@ -107,7 +116,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         through,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }
@@ -123,7 +132,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         through,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }
@@ -139,7 +148,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         at: pt,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }
@@ -154,7 +163,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         at: pt,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }
@@ -169,7 +178,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         at: pt,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }
@@ -184,7 +193,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         at: pt,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }
@@ -200,7 +209,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         at: pt,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }
@@ -212,7 +221,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         points: pts,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }
@@ -228,7 +237,7 @@ function applyAdd(state: EvalState, op: AddOp, stepId: string): void {
         to,
         color: resolveColor(op.color, 'black'),
         role: 'normal',
-        ...(op.label !== undefined ? { label: op.label } : {}),
+        ...labelProps(op),
       });
       break;
     }

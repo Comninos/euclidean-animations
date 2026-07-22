@@ -12,7 +12,7 @@ import { stateAt } from '../kernel/evaluate';
 import type { Scene, Shape } from '../kernel/types';
 import type { Proposition } from '../format/schema';
 import { animateAdd, animateRestyle, applyStaticStyle, prefersReducedMotion } from '../render/animate';
-import { appendRenderedShape, renderShape, type RenderedShape } from '../render/svg';
+import { appendRenderedShape, renderShape, repositionLabels, type RenderedShape } from '../render/svg';
 
 export type PlayState = 'paused' | 'playing';
 
@@ -124,7 +124,7 @@ export class Timeline {
     for (const id of scene.order) {
       const shape = scene.shapes.get(id);
       if (!shape) continue;
-      const rendered = renderShape(shape);
+      const rendered = renderShape(shape, scene);
       appendRenderedShape(this.container, rendered);
       this.stageEntries.set(id, { node: rendered.node, label: rendered.label });
     }
@@ -251,10 +251,13 @@ export class Timeline {
     // before animateAdd so the circle sweep's temporary arc path can
     // inherit it.
     this.markCurrentStep([...new Set([...addedIds, ...highlightIds])]);
+    // Let already-on-stage labels react to edges / marks introduced this step
+    // before the new geometry animates in (avoids letters sitting on new strokes).
+    repositionLabels(this.stageEntries, nextScene);
     for (const id of addedIds) {
       const shape = nextScene.shapes.get(id);
       if (!shape) continue;
-      const rendered: RenderedShape = renderShape(shape);
+      const rendered: RenderedShape = renderShape(shape, nextScene);
       rendered.node.setAttribute('data-current', '');
       rendered.label?.setAttribute('data-current', '');
       const handle = animateAdd(this.container, shape, rendered);

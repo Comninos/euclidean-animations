@@ -10,6 +10,7 @@
 
 import type { AngleMarkShape, Point, Scene, Shape } from '../kernel/types';
 import { styleForShape, LABEL_FONT_FAMILY, LABEL_FONT_STYLE, LABEL_FONT_SIZE, LABEL_OFFSET, POINT_RADIUS, resolveFillOrStroke, roleFillOpacity } from './style';
+import { placeLabel, type LabelPlacement } from './labelPlacement';
 import type { ViewBox } from '../format/schema';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -61,21 +62,31 @@ function pathD(points: readonly Point[], close: boolean): string {
   return parts.join(' ');
 }
 
-function createLabel(anchor: Point, text: string, color: string): SVGTextElement {
-  const svgP = toSvgPoint(anchor);
+function createLabel(placement: LabelPlacement, text: string, color: string): SVGTextElement {
+  const svgP = toSvgPoint(placement.position);
   const label = el('text');
   setAttrs(label, {
-    x: svgP.x + LABEL_OFFSET,
-    y: svgP.y - LABEL_OFFSET,
+    x: svgP.x,
+    y: svgP.y,
     'font-family': LABEL_FONT_FAMILY,
     'font-style': LABEL_FONT_STYLE,
     'font-size': LABEL_FONT_SIZE,
     fill: color,
-    'text-anchor': 'start',
+    'text-anchor': 'middle',
+    'dominant-baseline': 'central',
     class: 'euclid-label',
   });
   label.textContent = text;
   return label;
+}
+
+/** Move an existing label element to a freshly computed placement. */
+export function applyLabelPlacement(label: SVGTextElement, placement: LabelPlacement): void {
+  const svgP = toSvgPoint(placement.position);
+  label.setAttribute('x', String(svgP.x));
+  label.setAttribute('y', String(svgP.y));
+  label.setAttribute('text-anchor', 'middle');
+  label.setAttribute('dominant-baseline', 'central');
 }
 
 /** Result of rendering one shape: the primary geometry node plus an
@@ -84,10 +95,6 @@ export interface RenderedShape {
   readonly id: string;
   readonly node: SVGElement;
   readonly label: SVGTextElement | null;
-}
-
-function midOf(a: Point, b: Point): Point {
-  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
 }
 
 function angleMarkPath(shape: AngleMarkShape): string {
@@ -127,8 +134,10 @@ function normalizeDir(p: Point, from: Point): Point {
 }
 
 /** Render a single resolved shape into SVG element(s). Does not attach to
- * the DOM; caller appends `node` (and `label` if present) to the stage. */
-export function renderShape(shape: Shape): RenderedShape {
+ * the DOM; caller appends `node` (and `label` if present) to the stage.
+ * When `scene` is provided, point labels are placed via the angular-gap
+ * heuristic against incident geometry in that scene. */
+export function renderShape(shape: Shape, scene?: Scene): RenderedShape {
   let node: SVGElement;
 
   switch (shape.kind) {
@@ -197,8 +206,7 @@ export function renderShape(shape: Shape): RenderedShape {
 
   let label: SVGTextElement | null = null;
   if (shape.label) {
-    const anchor = labelAnchor(shape);
-    label = createLabel(anchor, shape.label, resolveFillOrStroke(shape.color));
+    label = createLabel(placeLabel(shape, scene), shape.label, resolveFillOrStroke(shape.color));
     label.setAttribute('data-id', `${shape.id}__label`);
     label.setAttribute('opacity', String(roleFillOpacity(shape.role)));
   }
@@ -206,27 +214,18 @@ export function renderShape(shape: Shape): RenderedShape {
   return { id: shape.id, node, label };
 }
 
-function labelAnchor(shape: Shape): Point {
-  switch (shape.kind) {
-    case 'point':
-      return shape.at;
-    case 'segment':
-      return midOf(shape.from, shape.to);
-    case 'line':
-      return midOf(shape.a, shape.b);
-    case 'ray':
-      return shape.through;
-    case 'circle':
-      return { x: shape.center.x, y: shape.center.y + shape.radius };
-    case 'polygon': {
-      const n = shape.points.length || 1;
-      const sum = shape.points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
-      return { x: sum.x / n, y: sum.y / n };
-    }
-    case 'angleMark':
-      return shape.vertex;
-    default:
-      return { x: 0, y: 0 };
+/** Recompute and apply label positions for every labeled shape already on
+ * stage. Used after a step lands so earlier letters can react to newly
+ * added edges / angle marks. */
+export function repositionLabels(
+  entries: ReadonlyMap<string, { label: SVGTextElement | null }>,
+  scene: Scene
+): void {
+  for (const [id, entry] of entries) {
+    if (!entry.label) continue;
+    const shape = scene.shapes.get(id);
+    if (!shape?.label) continue;
+    applyLabelPlacement(entry.label, placeLabel(shape, scene));
   }
 }
 
@@ -244,7 +243,7 @@ export function renderScene(scene: Scene): SVGGElement {
   for (const id of scene.order) {
     const shape = scene.shapes.get(id);
     if (!shape) continue;
-    const rendered = renderShape(shape);
+    const rendered = renderShape(shape, scene);
     geometry.appendChild(rendered.node);
     if (rendered.label) labels.appendChild(rendered.label);
   }

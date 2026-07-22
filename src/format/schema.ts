@@ -20,14 +20,20 @@
 // This convention is implemented in `src/kernel/ops.ts` and locked in by
 // `tests/ops.test.ts`.
 
-import type { ColorName, ShapeRole } from '../kernel/types';
+import type { ColorName, LabelSide, ShapeRole } from '../kernel/types';
 
 /** [x, y] tuple, math convention (y-up), used for literal coordinates in JSON. */
 export type Coords = readonly [number, number];
 
+export type { LabelSide };
+
 interface AddOpBase {
   readonly id: string;
   readonly label?: string;
+  /** Compass side for the label relative to the shape anchor (y-up plane). */
+  readonly labelSide?: LabelSide;
+  /** Explicit plane-space offset from the shape anchor (y-up). Wins over `labelSide`. */
+  readonly labelOffset?: Coords;
   readonly color?: ColorName;
 }
 

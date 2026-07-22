@@ -86,7 +86,19 @@ Field-by-field notes worth calling out explicitly:
 
 ## 3. Operations reference
 
-Every `add` op shares three optional base fields in addition to its own: `id` (required, unique — see above), `label` (optional text drawn next to the shape), `color` (optional, defaults to `"black"`). All fields below are exactly as declared in `src/format/schema.ts`; failure modes are exactly as thrown in `src/kernel/ops.ts` / `src/kernel/evaluate.ts`.
+Every `add` op shares optional base fields in addition to its own: `id` (required, unique — see above), `label` (optional text drawn next to the shape), `labelSide` / `labelOffset` (optional placement overrides — see below), `color` (optional, defaults to `"black"`). All fields below are exactly as declared in `src/format/schema.ts`; failure modes are exactly as thrown in `src/kernel/ops.ts` / `src/kernel/evaluate.ts`.
+
+**Label placement.** By default, point labels are placed automatically (`src/render/labelPlacement.ts`): the renderer collects incident segments/lines/rays/polygon edges at the point, finds the largest free angular sector, and sits the letter in that gap — preferring gaps outside any `angleMark` wedge at the vertex. Non-point labels (rare) still use a small northeast offset (`LABEL_OFFSET = 0.13` plane units). Authors can override:
+
+- `"labelSide": "N"|"NE"|"E"|"SE"|"S"|"SW"|"W"|"NW"` — place at `LABEL_OFFSET` along that compass direction (y-up).
+- `"labelOffset": [dx, dy]` — explicit plane-space offset from the anchor; wins over `labelSide`.
+
+```json
+{ "op": "point", "id": "A", "label": "A", "labelSide": "SW" }
+{ "op": "point", "id": "B", "label": "B", "labelOffset": [0.2, -0.1] }
+```
+
+When new edges appear on a later step, already-on-stage labels are repositioned to the new gap (`repositionLabels` in `src/render/svg.ts`, called from the timeline).
 
 ### `point`
 
@@ -283,7 +295,7 @@ The house style, distilled from the shipped propositions and the style constants
    - Does the **final step's caption read as the theorem statement** ("Therefore ABC is an equilateral triangle…")? If the last step is still mid-construction prose, the construction is probably missing its QED beat.
    - **Step through backward** from the end (step-back button / left arrow) at least once. Backward stepping renders instantly and statically (`Timeline.stepBackward` → `renderStatic`, no animation), so this is a fast way to visually confirm every intermediate scene looks sane — no shape appearing before its inputs exist, no scaffolding that should have been hidden still showing, etc.
    - Check that circles which are meant to intersect visibly do so with daylight between the crossing points and the tangent case (see section 5) — if you can't tell whether two circles cross or are tangent just by eye in the rendered figure, nudge the given coordinates.
-   - Confirm point labels don't collide — `LABEL_OFFSET` is a small fixed offset (0.13 plane units) from the shape's anchor, so two points placed close together in plane-space will get overlapping labels; give them enough separation instead.
+   - Confirm point labels read clearly — the renderer places letters in the largest free angular gap around each point (and away from angle marks). If two points are almost on top of each other their letters can still collide; give them enough separation, or set `labelSide` / `labelOffset` on the crowded op.
 
 ## 7. Exemplar
 
