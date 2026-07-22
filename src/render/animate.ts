@@ -15,6 +15,7 @@ import {
   CONSTRUCTION_OPACITY,
   POINT_RADIUS,
   STROKE_WIDTH,
+  STROKE_VECTOR_EFFECT,
   resolveFillOrStroke,
   roleFillOpacity,
   styleForShape,
@@ -272,6 +273,7 @@ export function animateAdd(
       arcPath.setAttribute('stroke', style.stroke);
       arcPath.setAttribute('stroke-width', String(style.strokeWidth));
       arcPath.setAttribute('stroke-linecap', style.lineCap);
+      arcPath.setAttribute('vector-effect', STROKE_VECTOR_EFFECT);
       if (style.strokeOpacity !== 1) arcPath.setAttribute('stroke-opacity', String(style.strokeOpacity));
       arcPath.setAttribute('data-id', `${shape.id}__sweep`);
       arcPath.setAttribute('data-kind', 'circle');
@@ -386,6 +388,7 @@ export function applyStaticStyle(node: SVGElement, shape: Shape): void {
   node.setAttribute('stroke', style.stroke);
   node.setAttribute('stroke-width', String(style.strokeWidth));
   node.setAttribute('stroke-opacity', String(style.strokeOpacity));
+  node.setAttribute('vector-effect', STROKE_VECTOR_EFFECT);
   if (style.strokeDasharray) node.setAttribute('stroke-dasharray', style.strokeDasharray);
   else node.removeAttribute('stroke-dasharray');
   node.removeAttribute('pathLength');

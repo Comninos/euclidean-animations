@@ -81,11 +81,13 @@ const MIN_PADDING = 0.28;
 /** Padding as a fraction of the scene's larger dimension. */
 const PADDING_RATIO = 0.04;
 /**
- * Floor on the framed extent (larger of width/height after padding). Stroke
- * widths and label sizes are in plane units, so a tiny diagram would otherwise
- * fill the stage and look thick/heavy next to props whose frame spans several
- * units. Expanding small frames with empty margin caps the on-screen scale.
- * Tuned to the equilateral-with-circles construction order of magnitude.
+ * Floor on the framed extent (larger of width/height after padding). Point
+ * dots and label font sizes are still in plane units, so a tiny diagram would
+ * otherwise fill the stage and look heavy next to props whose frame spans
+ * several units. Expanding small frames with empty margin caps the on-screen
+ * scale. (Stroke weight is independent of this floor — strokes use
+ * `vector-effect: non-scaling-stroke`.) Tuned to the equilateral-with-circles
+ * construction order of magnitude.
  */
 const MIN_VIEW_EXTENT = 5.5;
 

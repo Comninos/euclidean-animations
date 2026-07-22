@@ -50,10 +50,10 @@ const TEMPLATE = `
     ${paletteCssDeclarations(DARK_PALETTE)}
   }
   /* The current step's geometry (data-current, set by the timeline) always
-     renders in the accent color, so the newest construction stands out. */
+     renders in the accent color, so the newest construction stands out.
+     Labels stay ink — they must not match stroke colors (including accent). */
   svg.euclid-stage [data-current]:not(text) { stroke: var(--euclid-accent); }
   svg.euclid-stage [data-current][data-kind="point"] { fill: var(--euclid-accent); }
-  svg.euclid-stage text[data-current] { fill: var(--euclid-accent); }
   * { box-sizing: border-box; }
   .stage-wrap {
     position: relative;
@@ -87,6 +87,10 @@ const TEMPLATE = `
     fill: var(--euclid-background);
   }
   text.euclid-label {
+    fill: var(--euclid-black);
+    stroke: var(--euclid-background);
+    stroke-width: 0.06;
+    paint-order: stroke fill;
     user-select: none;
     pointer-events: none;
   }

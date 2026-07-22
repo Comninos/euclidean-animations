@@ -62,22 +62,30 @@ export function resolveFillOrStroke(color: ColorName): string {
   return `var(--euclid-${color})`;
 }
 
-/** Stroke width in SVG user units (the viewBox is in plane units, so this
- * is scaled by the renderer's stroke-width-to-viewBox ratio — see svg.ts). */
+/** Stroke width in CSS pixels of the root SVG viewport. Paired with
+ * `vector-effect: non-scaling-stroke` so line weight stays constant across
+ * viewBox scales — geometry is abstract marks, not a zoomed bitmap. */
 export const STROKE_WIDTH = {
-  normal: 0.024,
-  construction: 0.013,
+  normal: 2,
+  construction: 1.15,
 } as const;
+
+/** SVG `vector-effect` value applied to every stroked geometry node. */
+export const STROKE_VECTOR_EFFECT = 'non-scaling-stroke';
 
 export const POINT_RADIUS = 0.035;
 
 export const CONSTRUCTION_OPACITY = 0.45;
+/** Dash lengths in plane units (still scale with the figure; only stroke
+ * weight is non-scaling). */
 export const CONSTRUCTION_DASH = '0.09 0.07';
 
 export const LABEL_FONT_FAMILY = "'Georgia', 'Times New Roman', serif";
 export const LABEL_FONT_STYLE = 'italic';
 export const LABEL_FONT_SIZE = 0.16; // plane units; scaled with the rest of the drawing
 export const LABEL_OFFSET = 0.13; // distance labels sit away from their anchor point
+/** Paper-colored halo behind label glyphs so letters stay readable over ink. */
+export const LABEL_HALO_WIDTH = 0.06;
 
 export interface ResolvedStyle {
   readonly stroke: string;

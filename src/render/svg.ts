@@ -9,7 +9,7 @@
 // natural math coordinates in proposition JSON.
 
 import type { AngleMarkShape, Point, Scene, Shape } from '../kernel/types';
-import { styleForShape, LABEL_FONT_FAMILY, LABEL_FONT_STYLE, LABEL_FONT_SIZE, LABEL_OFFSET, POINT_RADIUS, resolveFillOrStroke, roleFillOpacity } from './style';
+import { styleForShape, LABEL_FONT_FAMILY, LABEL_FONT_STYLE, LABEL_FONT_SIZE, LABEL_HALO_WIDTH, LABEL_OFFSET, POINT_RADIUS, resolveFillOrStroke, roleFillOpacity, STROKE_VECTOR_EFFECT } from './style';
 import { placeLabel, type LabelPlacement } from './labelPlacement';
 import type { ViewBox } from '../format/schema';
 
@@ -47,6 +47,7 @@ function applyStrokeAttrs(node: SVGElement, shape: Shape): void {
     'stroke-dasharray': style.strokeDasharray,
     'stroke-linecap': style.lineCap,
     'stroke-linejoin': style.lineJoin,
+    'vector-effect': STROKE_VECTOR_EFFECT,
     fill: 'none',
   });
 }
@@ -62,7 +63,10 @@ function pathD(points: readonly Point[], close: boolean): string {
   return parts.join(' ');
 }
 
-function createLabel(placement: LabelPlacement, text: string, color: string): SVGTextElement {
+/** Labels always use ink (`--euclid-black`), never the shape's stroke color,
+ * so letters stay distinct from blue/yellow construction lines and from the
+ * current-step accent. A paper halo keeps them readable when they cross ink. */
+function createLabel(placement: LabelPlacement, text: string): SVGTextElement {
   const svgP = toSvgPoint(placement.position);
   const label = el('text');
   setAttrs(label, {
@@ -71,7 +75,10 @@ function createLabel(placement: LabelPlacement, text: string, color: string): SV
     'font-family': LABEL_FONT_FAMILY,
     'font-style': LABEL_FONT_STYLE,
     'font-size': LABEL_FONT_SIZE,
-    fill: color,
+    fill: resolveFillOrStroke('black'),
+    stroke: 'var(--euclid-background)',
+    'stroke-width': LABEL_HALO_WIDTH,
+    'paint-order': 'stroke fill',
     'text-anchor': 'middle',
     'dominant-baseline': 'central',
     class: 'euclid-label',
@@ -206,7 +213,7 @@ export function renderShape(shape: Shape, scene?: Scene): RenderedShape {
 
   let label: SVGTextElement | null = null;
   if (shape.label) {
-    label = createLabel(placeLabel(shape, scene), shape.label, resolveFillOrStroke(shape.color));
+    label = createLabel(placeLabel(shape, scene), shape.label);
     label.setAttribute('data-id', `${shape.id}__label`);
     label.setAttribute('opacity', String(roleFillOpacity(shape.role)));
   }
