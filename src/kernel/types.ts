@@ -30,7 +30,7 @@ interface ShapeBase {
   readonly labelOffset?: Point;
 }
 
-/** A resolved point shape: a labeled dot at a concrete location. */
+/** A resolved point shape: a lettered location (no filled-dot marker). */
 export interface PointShape extends ShapeBase {
   readonly kind: 'point';
   readonly at: Point;

@@ -53,7 +53,6 @@ const TEMPLATE = `
      renders in the accent color, so the newest construction stands out.
      Labels stay ink — they must not match stroke colors (including accent). */
   svg.euclid-stage [data-current]:not(text) { stroke: var(--euclid-accent); }
-  svg.euclid-stage [data-current][data-kind="point"] { fill: var(--euclid-accent); }
   /* Coincident under-strokes (see render/coincidence.ts): hide so a
      later stroke of a different color doesn't show AA fringe around it. */
   svg.euclid-stage [data-suppressed] { visibility: hidden; }

@@ -73,8 +73,6 @@ export const STROKE_WIDTH = {
 /** SVG `vector-effect` value applied to every stroked geometry node. */
 export const STROKE_VECTOR_EFFECT = 'non-scaling-stroke';
 
-export const POINT_RADIUS = 0.035;
-
 export const CONSTRUCTION_OPACITY = 0.45;
 /** Dash pattern for construction strokes, in CSS pixels. Geometry strokes
  * use `vector-effect: non-scaling-stroke`, which measures the dash array in
@@ -101,8 +99,7 @@ export interface ResolvedStyle {
 }
 
 /** Compute the resolved visual style for a shape, given its color + role.
- * All shapes render stroke-only (points fill with their stroke color,
- * handled separately in svg.ts). */
+ * All shapes render stroke-only (points are lettered anchors with no fill). */
 export function resolveStyle(color: ColorName, role: ShapeRole): ResolvedStyle {
   const isConstruction = role === 'construction';
   return {
@@ -119,7 +116,7 @@ export function resolveStyle(color: ColorName, role: ShapeRole): ResolvedStyle {
   };
 }
 
-/** Opacity for a shape's label (and a point's solid fill) under a role. */
+/** Opacity for a shape's label under a role. */
 export function roleFillOpacity(role: ShapeRole): number {
   return role === 'hidden' ? 0 : 1;
 }

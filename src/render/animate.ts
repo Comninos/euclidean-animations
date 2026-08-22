@@ -13,14 +13,12 @@ import type { Point, Scene, Shape } from '../kernel/types';
 import {
   CONSTRUCTION_DASH,
   CONSTRUCTION_OPACITY,
-  POINT_RADIUS,
   STROKE_WIDTH,
   STROKE_VECTOR_EFFECT,
-  resolveFillOrStroke,
   roleFillOpacity,
   styleForShape,
 } from './style';
-import { appendRenderedShape, renderShape, toSvgPoint, type RenderedShape } from './svg';
+import { appendRenderedShape, toSvgPoint, type RenderedShape } from './svg';
 
 // ---------------------------------------------------------------------------
 // Easing
@@ -177,7 +175,6 @@ export function runTweenGroup(handles: readonly TweenHandle[]): TweenGroupHandle
 // ---------------------------------------------------------------------------
 
 const DEFAULT_DURATION_MS = 1200;
-const POINT_FADE_DURATION_MS = 550;
 const LABEL_FADE_DURATION_MS = 750;
 const RESTYLE_DURATION_MS = 800;
 
@@ -233,8 +230,7 @@ export function animateAdd(
 
   switch (shape.kind) {
     case 'point': {
-      const circle = rendered.node as SVGCircleElement;
-      handles.push(fadeInTween(circle, POINT_FADE_DURATION_MS));
+      // Points have no visible geometry — the label fade below is the entrance.
       break;
     }
     case 'segment':
@@ -363,7 +359,6 @@ export function animateRestyle(
   const toStyle = styleForShape(to);
   const fromFill = roleFillOpacity(from.role);
   const toFill = roleFillOpacity(to.role);
-  const isPoint = from.kind === 'point';
 
   const handle = runTween({
     durationMs: RESTYLE_DURATION_MS,
@@ -373,9 +368,7 @@ export function animateRestyle(
       node.setAttribute('stroke', t < 0.5 ? fromStyle.stroke : toStyle.stroke);
       node.setAttribute('stroke-opacity', String(strokeOpacity));
       node.setAttribute('stroke-width', String(strokeWidth));
-      // Points carry a solid fill and shapes may carry a label; both fade
-      // with the role change (fully out for 'hidden').
-      if (isPoint) node.setAttribute('fill-opacity', String(lerp(fromFill, toFill, t)));
+      // Labels fade with the role change (fully out for 'hidden').
       if (label) label.setAttribute('opacity', String(lerp(fromFill, toFill, t)));
       // Dash pattern flips at the midpoint rather than interpolating (dash
       // arrays don't tween meaningfully) — visually reads as part of the fade.
@@ -393,7 +386,6 @@ export function animateRestyle(
       node.setAttribute('stroke-width', String(toStyle.strokeWidth));
       if (toStyle.strokeDasharray) node.setAttribute('stroke-dasharray', toStyle.strokeDasharray);
       else node.removeAttribute('stroke-dasharray');
-      if (isPoint) node.setAttribute('fill-opacity', String(toFill));
       if (label) label.setAttribute('opacity', String(toFill));
       node.setAttribute('data-role', to.role);
     },
@@ -422,9 +414,10 @@ export function applyStaticStyle(node: SVGElement, shape: Shape): void {
   node.style.strokeDashoffset = '';
   node.style.strokeDasharray = '';
   if (shape.kind === 'point') {
-    node.setAttribute('fill', resolveFillOrStroke(shape.color));
-    node.setAttribute('fill-opacity', '1');
-    node.setAttribute('r', String(POINT_RADIUS));
+    // Invisible anchor — letter labels carry the point.
+    node.setAttribute('fill', 'none');
+    node.setAttribute('stroke', 'none');
+    node.setAttribute('r', '0');
   } else {
     node.setAttribute('fill', 'none');
   }

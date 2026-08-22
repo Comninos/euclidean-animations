@@ -9,7 +9,7 @@
 // natural math coordinates in proposition JSON.
 
 import type { AngleMarkShape, Point, Scene, Shape } from '../kernel/types';
-import { styleForShape, LABEL_FONT_FAMILY, LABEL_FONT_STYLE, LABEL_FONT_SIZE, LABEL_HALO_WIDTH, LABEL_OFFSET, POINT_RADIUS, resolveFillOrStroke, roleFillOpacity, STROKE_VECTOR_EFFECT } from './style';
+import { styleForShape, LABEL_FONT_FAMILY, LABEL_FONT_STYLE, LABEL_FONT_SIZE, LABEL_HALO_WIDTH, LABEL_OFFSET, resolveFillOrStroke, roleFillOpacity, STROKE_VECTOR_EFFECT } from './style';
 import { placeLabel, type LabelPlacement } from './labelPlacement';
 import { suppressedStrokeIds } from './coincidence';
 import type { ViewBox } from '../format/schema';
@@ -142,12 +142,12 @@ export function renderShape(shape: Shape, scene?: Scene): RenderedShape {
 
   switch (shape.kind) {
     case 'point': {
+      // Points are lettered only — no filled-dot marker. Keep a zero-size
+      // anchor node so the timeline can still track the shape by id.
       const p = toSvgPoint(shape.at);
-      const circle = el('circle');
-      setAttrs(circle, { cx: p.x, cy: p.y, r: POINT_RADIUS });
-      applyStrokeAttrs(circle, shape);
-      setAttrs(circle, { fill: resolveFillOrStroke(shape.color), 'fill-opacity': roleFillOpacity(shape.role) });
-      node = circle;
+      const anchor = el('circle');
+      setAttrs(anchor, { cx: p.x, cy: p.y, r: 0, fill: 'none', stroke: 'none' });
+      node = anchor;
       break;
     }
     case 'segment': {
