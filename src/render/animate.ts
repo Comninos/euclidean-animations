@@ -227,7 +227,7 @@ export function animateAdd(
   shape: Shape,
   rendered: RenderedShape
 ): TweenGroupHandle {
-  appendRenderedShape(container, rendered);
+  appendRenderedShape(container, rendered, shape);
   const style = styleForShape(shape);
   const handles: TweenHandle[] = [];
 

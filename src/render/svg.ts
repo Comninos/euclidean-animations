@@ -214,6 +214,58 @@ export function renderShape(shape: Shape, scene?: Scene): RenderedShape {
   return { id: shape.id, node, label };
 }
 
+/** Paint order within `.euclid-geometry` (bottom → top): dashed
+ * construction scaffolding, then solid ink strokes, then points. Keeps
+ * demoted scaffolding from covering solid sides it partially overlaps. */
+const GEOMETRY_LAYERS = ['euclid-construction', 'euclid-ink', 'euclid-points'] as const;
+type GeometryLayerClass = (typeof GEOMETRY_LAYERS)[number];
+
+export function geometryLayerFor(shape: Pick<Shape, 'kind' | 'role'>): GeometryLayerClass {
+  if (shape.kind === 'point') return 'euclid-points';
+  if (shape.role === 'construction') return 'euclid-construction';
+  return 'euclid-ink';
+}
+
+function ensureStageGroups(container: SVGElement): { geometry: SVGGElement; labels: SVGGElement } {
+  let geometry = container.querySelector(':scope > .euclid-geometry') as SVGGElement | null;
+  let labels = container.querySelector(':scope > .euclid-labels') as SVGGElement | null;
+  if (!geometry) {
+    geometry = el('g');
+    geometry.setAttribute('class', 'euclid-geometry');
+    container.appendChild(geometry);
+  }
+  for (const cls of GEOMETRY_LAYERS) {
+    if (!geometry.querySelector(`:scope > .${cls}`)) {
+      const layer = el('g');
+      layer.setAttribute('class', cls);
+      geometry.appendChild(layer);
+    }
+  }
+  // Re-assert layer order in case a stray append shuffled them.
+  for (const cls of GEOMETRY_LAYERS) {
+    const layer = geometry.querySelector(`:scope > .${cls}`);
+    if (layer) geometry.appendChild(layer);
+  }
+  if (!labels) {
+    labels = el('g');
+    labels.setAttribute('class', 'euclid-labels');
+    container.appendChild(labels);
+  }
+  return { geometry, labels };
+}
+
+/** Move `node` into the geometry sub-layer appropriate for `shape`'s kind
+ * and role. Safe to call again after a restyle changes the role. */
+export function placeShapeInLayer(
+  container: SVGElement,
+  node: SVGElement,
+  shape: Pick<Shape, 'kind' | 'role'>
+): void {
+  const { geometry } = ensureStageGroups(container);
+  const layer = geometry.querySelector(`:scope > .${geometryLayerFor(shape)}`) as SVGGElement;
+  layer.appendChild(node);
+}
+
 /** Render a full scene into a fresh <g> element, statically (no animation).
  * This is the function step-back / seek / prefers-reduced-motion use.
  * Geometry is painted first, then every label, so labels always sit above
@@ -221,10 +273,6 @@ export function renderShape(shape: Shape, scene?: Scene): RenderedShape {
 export function renderScene(scene: Scene): SVGGElement {
   const g = el('g');
   g.setAttribute('class', 'euclid-scene');
-  const geometry = el('g');
-  geometry.setAttribute('class', 'euclid-geometry');
-  const labels = el('g');
-  labels.setAttribute('class', 'euclid-labels');
   const suppressed = suppressedStrokeIds(scene);
   for (const id of scene.order) {
     const shape = scene.shapes.get(id);
@@ -234,31 +282,21 @@ export function renderScene(scene: Scene): SVGGElement {
       rendered.node.setAttribute('data-suppressed', '');
       rendered.label?.setAttribute('data-suppressed', '');
     }
-    geometry.appendChild(rendered.node);
-    if (rendered.label) labels.appendChild(rendered.label);
+    appendRenderedShape(g, rendered, shape);
   }
-  g.appendChild(geometry);
-  g.appendChild(labels);
   return g;
 }
 
 /** Append a rendered shape's geometry (and label) so labels stay in a
  * trailing `.euclid-labels` group above all strokes. Used by animated
  * step-forward, which paints directly into the stage SVG. */
-export function appendRenderedShape(container: SVGElement, rendered: RenderedShape): void {
-  let geometry = container.querySelector(':scope > .euclid-geometry') as SVGGElement | null;
-  let labels = container.querySelector(':scope > .euclid-labels') as SVGGElement | null;
-  if (!geometry) {
-    geometry = el('g');
-    geometry.setAttribute('class', 'euclid-geometry');
-    container.appendChild(geometry);
-  }
-  if (!labels) {
-    labels = el('g');
-    labels.setAttribute('class', 'euclid-labels');
-    container.appendChild(labels);
-  }
-  geometry.appendChild(rendered.node);
+export function appendRenderedShape(
+  container: SVGElement,
+  rendered: RenderedShape,
+  shape: Pick<Shape, 'kind' | 'role'>
+): void {
+  const { labels } = ensureStageGroups(container);
+  placeShapeInLayer(container, rendered.node, shape);
   if (rendered.label) labels.appendChild(rendered.label);
   // Keep the labels group last among direct children so it stays on top
   // even if other nodes (e.g. temporary circle-sweep paths) were appended
