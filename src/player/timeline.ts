@@ -12,6 +12,7 @@ import { stateAt } from '../kernel/evaluate';
 import type { Scene, Shape } from '../kernel/types';
 import type { Proposition } from '../format/schema';
 import { animateAdd, animateRestyle, applyStaticStyle, prefersReducedMotion } from '../render/animate';
+import { suppressedStrokeIds } from '../render/coincidence';
 import { appendRenderedShape, renderShape, type RenderedShape } from '../render/svg';
 
 export type PlayState = 'paused' | 'playing';
@@ -134,6 +135,17 @@ export class Timeline {
       const rendered = renderShape(shape, this.labelScene);
       appendRenderedShape(this.container, rendered);
       this.stageEntries.set(id, { node: rendered.node, label: rendered.label });
+    }
+    this.syncSuppressedStrokes(scene);
+  }
+
+  /** Hide strokes fully covered by a later visible coincident shape so
+   * stacked anti-aliased edges don't fringe through (see coincidence.ts). */
+  private syncSuppressedStrokes(scene: Scene): void {
+    const suppressed = suppressedStrokeIds(scene);
+    for (const [id, entry] of this.stageEntries) {
+      entry.node.toggleAttribute('data-suppressed', suppressed.has(id));
+      entry.label?.toggleAttribute('data-suppressed', suppressed.has(id));
     }
   }
 
@@ -279,6 +291,11 @@ export class Timeline {
       const handle = animateRestyle(entry.node, before, after, entry.label);
       groupHandles.push(handle);
     }
+
+    // Covering shapes are already in the DOM (animateAdd appends
+    // immediately), so suppress coincident under-strokes before the
+    // draw-on/fade runs — avoids an accent fringe over ink mid-tween.
+    this.syncSuppressedStrokes(nextScene);
 
     const combined = {
       cancel: () => groupHandles.forEach((h) => h.cancel()),

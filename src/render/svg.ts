@@ -11,6 +11,7 @@
 import type { AngleMarkShape, Point, Scene, Shape } from '../kernel/types';
 import { styleForShape, LABEL_FONT_FAMILY, LABEL_FONT_STYLE, LABEL_FONT_SIZE, LABEL_HALO_WIDTH, LABEL_OFFSET, POINT_RADIUS, resolveFillOrStroke, roleFillOpacity, STROKE_VECTOR_EFFECT } from './style';
 import { placeLabel, type LabelPlacement } from './labelPlacement';
+import { suppressedStrokeIds } from './coincidence';
 import type { ViewBox } from '../format/schema';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -224,10 +225,15 @@ export function renderScene(scene: Scene): SVGGElement {
   geometry.setAttribute('class', 'euclid-geometry');
   const labels = el('g');
   labels.setAttribute('class', 'euclid-labels');
+  const suppressed = suppressedStrokeIds(scene);
   for (const id of scene.order) {
     const shape = scene.shapes.get(id);
     if (!shape) continue;
     const rendered = renderShape(shape, scene);
+    if (suppressed.has(id)) {
+      rendered.node.setAttribute('data-suppressed', '');
+      rendered.label?.setAttribute('data-suppressed', '');
+    }
     geometry.appendChild(rendered.node);
     if (rendered.label) labels.appendChild(rendered.label);
   }
