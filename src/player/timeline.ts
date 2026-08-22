@@ -11,7 +11,13 @@
 import { stateAt } from '../kernel/evaluate';
 import type { Scene, Shape } from '../kernel/types';
 import type { Proposition } from '../format/schema';
-import { animateAdd, animateRestyle, applyStaticStyle, prefersReducedMotion } from '../render/animate';
+import {
+  animateAdd,
+  animateRestyle,
+  applyStaticStyle,
+  prefersReducedMotion,
+  runTween,
+} from '../render/animate';
 import { suppressedStrokeIds } from '../render/coincidence';
 import { appendRenderedShape, placeShapeInLayer, renderShape, type RenderedShape } from '../render/svg';
 
@@ -28,7 +34,15 @@ export interface TimelineEvents {
   onPlayStateChange?: (state: PlayState) => void;
 }
 
-const BEAT_PAUSE_MS = 750;
+/** Pause between committed steps while autoplaying. Kept long enough that
+ * the reader can finish the previous caption before the next draw starts. */
+const BEAT_PAUSE_MS = 1400;
+
+/** Minimum time a step with no entrance/restyle motion (highlight-only or
+ * caption-only) stays active before committing. Without this, those steps
+ * resolve in a single frame and play() races past them after only the
+ * inter-step beat — too fast to notice the accent change or read the text. */
+const STATIC_STEP_HOLD_MS = 1600;
 
 /** Tracks the SVG nodes currently on stage for each shape id, so later
  * steps (restyle, highlight, or a future removal) can find and mutate them
@@ -306,6 +320,18 @@ export class Timeline {
       placeShapeInLayer(this.container, entry.node, after);
       const handle = animateRestyle(entry.node, before, after, entry.label);
       groupHandles.push(handle);
+    }
+
+    // Highlight-only / caption-only steps have no entrance or restyle
+    // tweens. Hold them on stage so play() (and a single step-forward)
+    // gives the reader time to read the caption and see the accent set.
+    if (groupHandles.length === 0) {
+      groupHandles.push(
+        runTween({
+          durationMs: STATIC_STEP_HOLD_MS,
+          onFrame: () => {},
+        }),
+      );
     }
 
     // Reveal under-strokes whose cover just went away, but keep currently

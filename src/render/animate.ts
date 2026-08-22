@@ -176,10 +176,10 @@ export function runTweenGroup(handles: readonly TweenHandle[]): TweenGroupHandle
 // Per-shape entrance animations (the "add" verb).
 // ---------------------------------------------------------------------------
 
-const DEFAULT_DURATION_MS = 900;
-const POINT_FADE_DURATION_MS = 400;
-const LABEL_FADE_DURATION_MS = 550;
-const RESTYLE_DURATION_MS = 600;
+const DEFAULT_DURATION_MS = 1200;
+const POINT_FADE_DURATION_MS = 550;
+const LABEL_FADE_DURATION_MS = 750;
+const RESTYLE_DURATION_MS = 800;
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
