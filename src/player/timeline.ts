@@ -13,7 +13,7 @@ import type { Scene, Shape } from '../kernel/types';
 import type { Proposition } from '../format/schema';
 import { animateAdd, animateRestyle, applyStaticStyle, prefersReducedMotion } from '../render/animate';
 import { suppressedStrokeIds } from '../render/coincidence';
-import { appendRenderedShape, renderShape, type RenderedShape } from '../render/svg';
+import { appendRenderedShape, placeShapeInLayer, renderShape, type RenderedShape } from '../render/svg';
 
 export type PlayState = 'paused' | 'playing';
 
@@ -133,19 +133,32 @@ export class Timeline {
       const shape = scene.shapes.get(id);
       if (!shape) continue;
       const rendered = renderShape(shape, this.labelScene);
-      appendRenderedShape(this.container, rendered);
+      appendRenderedShape(this.container, rendered, shape);
       this.stageEntries.set(id, { node: rendered.node, label: rendered.label });
     }
     this.syncSuppressedStrokes(scene);
   }
 
   /** Hide strokes fully covered by a later visible coincident shape so
-   * stacked anti-aliased edges don't fringe through (see coincidence.ts). */
-  private syncSuppressedStrokes(scene: Scene): void {
+   * stacked anti-aliased edges don't fringe through (see coincidence.ts).
+   *
+   * When `mode` is `'unsuppress-only'`, only clears suppression for strokes
+   * that are no longer covered (e.g. their cover was hidden) — never newly
+   * hides anything. Used at the start of a forward step so under-strokes
+   * stay painted until the superior stroke's entrance animation finishes. */
+  private syncSuppressedStrokes(scene: Scene, mode: 'full' | 'unsuppress-only' = 'full'): void {
     const suppressed = suppressedStrokeIds(scene);
     for (const [id, entry] of this.stageEntries) {
-      entry.node.toggleAttribute('data-suppressed', suppressed.has(id));
-      entry.label?.toggleAttribute('data-suppressed', suppressed.has(id));
+      const shouldSuppress = suppressed.has(id);
+      if (mode === 'unsuppress-only') {
+        if (!shouldSuppress) {
+          entry.node.removeAttribute('data-suppressed');
+          entry.label?.removeAttribute('data-suppressed');
+        }
+        continue;
+      }
+      entry.node.toggleAttribute('data-suppressed', shouldSuppress);
+      entry.label?.toggleAttribute('data-suppressed', shouldSuppress);
     }
   }
 
@@ -288,14 +301,17 @@ export class Timeline {
       const before = currentScene.shapes.get(id);
       const after = nextScene.shapes.get(id);
       if (!entry || !before || !after) continue;
+      // Re-layer before the restyle tween so demoted scaffolding drops
+      // under solid ink immediately (not only after the dash appears).
+      placeShapeInLayer(this.container, entry.node, after);
       const handle = animateRestyle(entry.node, before, after, entry.label);
       groupHandles.push(handle);
     }
 
-    // Covering shapes are already in the DOM (animateAdd appends
-    // immediately), so suppress coincident under-strokes before the
-    // draw-on/fade runs — avoids an accent fringe over ink mid-tween.
-    this.syncSuppressedStrokes(nextScene);
+    // Reveal under-strokes whose cover just went away, but keep currently
+    // visible under-strokes until the superior stroke has fully appeared
+    // (fade/draw-on). Full suppression runs after the tween commits below.
+    this.syncSuppressedStrokes(nextScene, 'unsuppress-only');
 
     const combined = {
       cancel: () => groupHandles.forEach((h) => h.cancel()),
@@ -312,6 +328,7 @@ export class Timeline {
       this.activeAnimation = null;
       this.animatingTarget = null;
       this.step = targetStep;
+      this.syncSuppressedStrokes(nextScene);
       this.events.onStepChange?.(this.step, this.totalSteps);
     }
   }
