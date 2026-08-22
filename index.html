@@ -45,12 +45,9 @@
     }
     figure {
       margin: 0;
-      border: 1px solid rgba(13,12,12,0.2);
-      border-radius: 4px;
-      overflow: hidden;
     }
     figcaption {
-      padding: 0.9rem 1.1rem 0.4rem;
+      padding: 0 0 0.75rem;
       font-size: 1.05rem;
     }
     figcaption .id {
@@ -67,10 +64,11 @@
       margin-right: 0.5rem;
       vertical-align: middle;
     }
+    /* Border comes from the player itself, so drawing + caption + controls
+       sit in one frame (no nested figure/player boxes). */
     euclid-player {
       display: block;
-      margin: 0 1.1rem 1.1rem;
-      width: calc(100% - 2.2rem);
+      width: 100%;
     }
     footer {
       text-align: center;

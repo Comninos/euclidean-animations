@@ -60,6 +60,9 @@ const TEMPLATE = `
     width: 100%;
     aspect-ratio: var(--euclid-aspect);
     background: var(--euclid-background);
+    /* Keep geometry a little inside the host border so strokes and labels
+       don't kiss the frame edge. */
+    padding: 0.85em;
   }
   /* fill mode (<euclid-player fill>): fit the host's given height instead
      of deriving height from width via aspect-ratio. Used by full-bleed
