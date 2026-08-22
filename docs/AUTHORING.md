@@ -285,6 +285,7 @@ The house style, distilled from the shipped propositions and the style constants
 - **Choose `given` coordinates so no two circles that must be visually distinct have nearly-equal radii or near-tangencies that read as rendering bugs.** An early draft of this project used lengths close enough that intersecting circles looked tangent (or like a rendering error) even though they mathematically crossed in two points. Pick given lengths with enough visual slack — as a rule of thumb, if two circles must intersect, make sure their radii and center separation put the intersection points comfortably off the line joining the centers, not within a few percent of tangency. If `intersect` throws a "circles are tangent" or "too far apart" error at all, that is the kernel telling you outright that your chosen coordinates are wrong, not a rendering glitch — see the failure-mode list in section 3.
 - **Keep the whole figure compact.** The auto-computed frame (`src/kernel/bounds.ts`) is the union of *every step's visible geometry* — including every circle's full radius, not just its center — with only a small fixed/proportional padding (`MIN_PADDING = 0.28` plane units, or 4% of the larger dimension, whichever is bigger). After padding, the larger of width/height is floored at `MIN_VIEW_EXTENT` (5.5 plane units) so compact diagrams don't fill the stage with oversized point dots and labels (stroke weight is independent of this floor: geometry uses `vector-effect: non-scaling-stroke` with pixel stroke widths). Scaffolding that is drawn solid and later hidden still costs figure size for the frames in which it is visible. A construction with one far-flung point (e.g. a circle radius that's 10× everything else) will shrink the rest of the figure to a speck to fit that one outlier. Aim for a final figure that lives in roughly a 2–3 unit square (the floor only adds empty margin around it).
 - **Letter points the way the classical figure does.** Euclid's propositions name points in a specific order as the construction proceeds (given points first, then letters introduced by the construction). Match your source proposition's own lettering rather than inventing your own scheme — a reader comparing the animation to a text edition should see the same letters doing the same things. Labels always render in ink (`--euclid-black`) with a paper halo, never in the shape's stroke color or the current-step accent, and they paint above all geometry.
+- **Paint order is fixed bands, not “newest on top of everything.”** The renderer (`GEOMETRY_LAYERS` / `.euclid-labels` in `src/render/svg.ts`) stacks, bottom → top: dashed `role: "construction"` strokes → solid/`hidden` ink strokes → points → labels. Within a geometry band, later adds sit above earlier peers; a restyle that stays in the same band does **not** promote the stroke. Labels sit above all geometry and are not reshuffled by `highlight` or the current-step accent. Authors never set z-order — demoting scaffolding with `set`/`role: "construction"` is what drops it under ink. `color: "construction"` alone does not change band.
 
 ## 6. Workflow
 
@@ -397,11 +398,13 @@ Every op also accepts optional `id` (required in practice — see section 2), `l
 
 ### Roles (`ShapeRole`)
 
-| role | stroke | dash | opacity | counted in auto-frame? |
-|---|---|---|---|---|
-| `normal` | full width (2px) | solid | 100% | yes |
-| `construction` | thin (1.15px) | dashed (`9 7` px) | 45% | yes |
-| `hidden` | n/a (opacity 0) | n/a | 0% | only for steps where it is still visible (frame = union over all steps) |
+| role | stroke | dash | opacity | paint band (non-points) | counted in auto-frame? |
+|---|---|---|---|---|---|
+| `normal` | full width (2px) | solid | 100% | ink | yes |
+| `construction` | thin (1.15px) | dashed (`9 7` px) | 45% | construction (under ink) | yes |
+| `hidden` | n/a (opacity 0) | n/a | 0% | ink | only for steps where it is still visible (frame = union over all steps) |
+
+Points always paint in the points band (above strokes); labels always paint above geometry. See the paint-order bullet in section 5.
 
 ### Colors (`ColorName`)
 

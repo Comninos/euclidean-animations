@@ -315,8 +315,8 @@ export class Timeline {
       const before = currentScene.shapes.get(id);
       const after = nextScene.shapes.get(id);
       if (!entry || !before || !after) continue;
-      // Re-layer before the restyle tween so demoted scaffolding drops
-      // under solid ink immediately (not only after the dash appears).
+      // Cross-band role changes re-slot immediately (construction under ink);
+      // same-band restyles leave within-band order alone (see placeShapeInLayer).
       placeShapeInLayer(this.container, entry.node, after);
       const handle = animateRestyle(entry.node, before, after, entry.label);
       groupHandles.push(handle);

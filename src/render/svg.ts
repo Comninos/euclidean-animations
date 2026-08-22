@@ -214,25 +214,45 @@ export function renderShape(shape: Shape, scene?: Scene): RenderedShape {
   return { id: shape.id, node, label };
 }
 
-/** Paint order within `.euclid-geometry` (bottom → top): dashed
- * construction scaffolding, then solid ink strokes, then points. Keeps
- * demoted scaffolding from covering solid sides it partially overlaps. */
-const GEOMETRY_LAYERS = ['euclid-construction', 'euclid-ink', 'euclid-points'] as const;
-type GeometryLayerClass = (typeof GEOMETRY_LAYERS)[number];
+/**
+ * Canonical paint order (bottom → top). Geometry bands live under
+ * `.euclid-geometry`; labels are a sibling group above all geometry.
+ *
+ * | Band              | Contents                                      | Within-band order          |
+ * |-------------------|-----------------------------------------------|----------------------------|
+ * | construction      | non-point strokes with `role: "construction"` | scene/add order (last top) |
+ * | ink               | non-point strokes with `role: "normal"`/`"hidden"` | same                  |
+ * | points            | all `kind: "point"` (any role)                | same                       |
+ * | labels            | every letter label                            | construction order; stable |
+ *
+ * Non-rules (deliberately *not* part of this scheme):
+ * - Current-step accent (`data-current`) does not change z-order.
+ * - `highlight` does not re-layer shapes.
+ * - `color: "construction"` alone does not change band — only `role` does.
+ */
+export const GEOMETRY_LAYERS = ['euclid-construction', 'euclid-ink', 'euclid-points'] as const;
+export type GeometryLayerClass = (typeof GEOMETRY_LAYERS)[number];
+export const LABELS_LAYER_CLASS = 'euclid-labels';
 
 export function geometryLayerFor(shape: Pick<Shape, 'kind' | 'role'>): GeometryLayerClass {
+  // Points always sit above strokes so letter anchors aren't buried under
+  // ink/dashes — role does not demote a point into the construction band.
   if (shape.kind === 'point') return 'euclid-points';
+  // Dashed scaffolding is the bottom stroke band. `hidden` stays in ink:
+  // opacity already removes it from view; no fourth band needed.
   if (shape.role === 'construction') return 'euclid-construction';
   return 'euclid-ink';
 }
 
 function ensureStageGroups(container: SVGElement): { geometry: SVGGElement; labels: SVGGElement } {
   let geometry = container.querySelector(':scope > .euclid-geometry') as SVGGElement | null;
-  let labels = container.querySelector(':scope > .euclid-labels') as SVGGElement | null;
+  let labels = container.querySelector(`:scope > .${LABELS_LAYER_CLASS}`) as SVGGElement | null;
   if (!geometry) {
     geometry = el('g');
     geometry.setAttribute('class', 'euclid-geometry');
-    container.appendChild(geometry);
+    // Geometry must sit under labels; insert before labels if they exist.
+    if (labels) container.insertBefore(geometry, labels);
+    else container.appendChild(geometry);
   }
   for (const cls of GEOMETRY_LAYERS) {
     if (!geometry.querySelector(`:scope > .${cls}`)) {
@@ -241,21 +261,27 @@ function ensureStageGroups(container: SVGElement): { geometry: SVGGElement; labe
       geometry.appendChild(layer);
     }
   }
-  // Re-assert layer order in case a stray append shuffled them.
+  // Re-assert band order in case a stray append shuffled them.
   for (const cls of GEOMETRY_LAYERS) {
     const layer = geometry.querySelector(`:scope > .${cls}`);
     if (layer) geometry.appendChild(layer);
   }
   if (!labels) {
     labels = el('g');
-    labels.setAttribute('class', 'euclid-labels');
+    labels.setAttribute('class', LABELS_LAYER_CLASS);
     container.appendChild(labels);
   }
+  // Geometry under labels, labels absolute top among stage children.
+  container.appendChild(geometry);
+  container.appendChild(labels);
   return { geometry, labels };
 }
 
-/** Move `node` into the geometry sub-layer appropriate for `shape`'s kind
- * and role. Safe to call again after a restyle changes the role. */
+/** Move `node` into the geometry sub-layer for `shape`'s kind/role.
+ * Appends only when the node is not already in that band — so a restyle
+ * that stays in-band (e.g. color-only, or normal→hidden) does not promote
+ * the stroke within the band. New adds and cross-band role changes still
+ * land on top of their target band via appendChild. */
 export function placeShapeInLayer(
   container: SVGElement,
   node: SVGElement,
@@ -263,13 +289,14 @@ export function placeShapeInLayer(
 ): void {
   const { geometry } = ensureStageGroups(container);
   const layer = geometry.querySelector(`:scope > .${geometryLayerFor(shape)}`) as SVGGElement;
+  if (node.parentNode === layer) return;
   layer.appendChild(node);
 }
 
 /** Render a full scene into a fresh <g> element, statically (no animation).
  * This is the function step-back / seek / prefers-reduced-motion use.
- * Geometry is painted first, then every label, so labels always sit above
- * strokes regardless of construction order. */
+ * Shapes are placed into the canonical bands (see `GEOMETRY_LAYERS`);
+ * labels always sit in `.euclid-labels` above all geometry. */
 export function renderScene(scene: Scene): SVGGElement {
   const g = el('g');
   g.setAttribute('class', 'euclid-scene');
@@ -287,9 +314,10 @@ export function renderScene(scene: Scene): SVGGElement {
   return g;
 }
 
-/** Append a rendered shape's geometry (and label) so labels stay in a
- * trailing `.euclid-labels` group above all strokes. Used by animated
- * step-forward, which paints directly into the stage SVG. */
+/** Append a rendered shape into its geometry band (and its label into the
+ * labels group). Labels stay above all strokes; within the labels group,
+ * order follows construction/add order (stable — highlight does not
+ * reshuffle letters). Used by animated step-forward and static paints. */
 export function appendRenderedShape(
   container: SVGElement,
   rendered: RenderedShape,
@@ -298,9 +326,7 @@ export function appendRenderedShape(
   const { labels } = ensureStageGroups(container);
   placeShapeInLayer(container, rendered.node, shape);
   if (rendered.label) labels.appendChild(rendered.label);
-  // Keep the labels group last among direct children so it stays on top
-  // even if other nodes (e.g. temporary circle-sweep paths) were appended
-  // after it earlier.
+  // Re-assert labels as the topmost stage child (geometry stays under it).
   container.appendChild(labels);
 }
 
